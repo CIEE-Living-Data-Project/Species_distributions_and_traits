@@ -1,0 +1,1 @@
+We'll use this folder to store scripts used in downloading, cleaning and validating, and analyzing data. Later on, we should include metadata about the scripts, e.g. which file names do what.
