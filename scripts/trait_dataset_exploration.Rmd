@@ -11,10 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Load libraries and files
 ```{r}
-library(tidyverse)
-library(openxlsx)
-library(here)
-library(knitr)
+source(here("functions/R_package_check.R"))
+prepareLibrary()
+source(here("functions/QOL_toolkit.R"))
 
 theme_set(theme_bw())
 set_here(path = "..")

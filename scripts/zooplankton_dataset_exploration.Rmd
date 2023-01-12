@@ -11,12 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Load libraries and files
 ```{r}
-library(tidyverse)
-library(openxlsx)
-library(here)
-library(knitr)
-library(lubridate)
-library(PBSmapping)
+source(here("functions/R_package_check.R"))
+prepareLibrary()
+source(here("functions/QOL_toolkit.R"))
+source(here("functions/zoop_traits_toolkit.R"))
 
 theme_set(theme_bw())
 set_here(path = "..")
@@ -30,11 +28,6 @@ data(nepacLLhigh) #higher resolution maps
 colnames(nepacLLhigh) <- c("group", "POS", "lon", "lat") # rename columns
 colnames(nepacLL) <- c("group", "POS", "lon", "lat")
 
-
-# The zooplankton abundance dataset from net observations
-source(here("functions/zoop_traits_toolkit.R"))
-# TODO: reorder factor levels for traitID and traitName
-
 ```
 
 # Load and wrangle the zooplankton net data.
@@ -42,6 +35,8 @@ Data source for zooplankton abundance and biomass data: https://open.canada.ca/d
 
 Data dictionary: https://pacgis01.dfo-mpo.gc.ca/FGPPublic/Zooplankton_Data_SoG/Data_dictionary_EN_FR_SoG_zooplankton_data_1996-2018.htm
 ```{r}
+# The zooplankton abundance dataset from net observations
+# TODO: reorder factor levels for traitID and traitName
 zoop.SOG <- read.csv(here("data_inputs/Zoopl_SofG_1996-2018_EN.csv"),
                             check.names = F) %>% 
   # Rename some columns
