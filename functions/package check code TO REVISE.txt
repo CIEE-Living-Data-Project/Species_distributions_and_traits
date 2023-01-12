@@ -1,0 +1,31 @@
+packages <-
+  c("tidyverse",
+    "vegan",
+    "lubridate",
+    "sf",
+    "ggspatial",
+    "rnaturalearth",
+    "rnaturalearthdata",
+    "viridis",
+    "ggsci",
+    "Polychrome",
+    "cowplot",
+    "grid",
+    "Hmisc",
+    "corrplot",
+    "tibble",
+    "dplyr",
+    "ordr")
+
+package.check <- lapply(
+  packages,
+  FUN = function(x)
+  {
+    if (!require(x, character.only = TRUE))
+    {
+      install.packages(x, dependencies = TRUE,
+                       repos = "http://cran.us.r-project.org")
+      library(x, character.only = TRUE)
+    }
+  }
+)

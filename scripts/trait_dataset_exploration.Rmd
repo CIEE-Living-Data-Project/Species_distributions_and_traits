@@ -1,0 +1,55 @@
+---
+title: "Exploring the trait dataset file"
+author: "Patrick Pata"
+date: '2023-01-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries and files
+```{r}
+library(tidyverse)
+library(openxlsx)
+library(here)
+library(knitr)
+
+theme_set(theme_bw())
+set_here(path = "..")
+
+# Load trait dataset metadata tables
+directory.trait <- openxlsx::read.xlsx(here("table_inputs/trait_directory_20230109.xlsx"))
+directory.lifestage <- openxlsx::read.xlsx(here("table_inputs/lifestage_directory_20221113.xlsx"))
+taxonomy <- openxlsx::read.xlsx(here("table_inputs/taxonomy_table_20221122.xlsx"))
+dataset.format <- openxlsx::read.xlsx(here("table_inputs/trait_dataset_standard_format_20221118.xlsx"))
+
+# Load the trait dataset
+load(here("data_inputs/zooplankton_traits_2023_01_06.RData"))
+
+# TODO: reorder factor levels for traitID and traitName
+```
+
+# Contents of the trait dataset
+```{r}
+# What traits are available?
+# The current dataset has 63 traits assigned to 5 general trait buckets.
+length(unique(directory.trait$traitName)) 
+unique(directory.trait$traitBucket)
+
+# Traits have a dataset-specific traitName which were assigned with standardized trait units. A single trait may be represented in multiple ways and thus have unique traitIDs and traitNames (e.g., the nitrogen content trait can be "nitrogenTotal" which is the bulk total nitrogen of an individual in mg or "nitrogenPDW" which is the percent of nitrogen relative to the dry weight).
+kable(select(directory.trait, traitBucket, trait, traitName, traitUnit, dataType))
+
+# The trait dataset contains information in 3 data types. "Continuous" are numerical traits while categorical traits are coded as characters. Many of the categorical traits would have a binary version in which 1 represents presence of a trait and 0 represents absence.
+unique(directory.trait$dataType)
+
+
+# Number of taxon observation per trait. The number of taxa with trait records vary with bodyLengthMax having the most trait data. The coverage of rate trait data is limited because this dataset includes only trait observations with temperature information and most have an associated measure of weight.
+zooplankton.traits %>% 
+  group_by(traitID, traitName) %>% 
+  count()
+
+```
+
+
