@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Load libraries and files
 ```{r}
+library(here)
 source(here("functions/R_package_check.R"))
 prepareLibrary()
 source(here("functions/QOL_toolkit.R"))
@@ -25,30 +26,172 @@ taxonomy <- openxlsx::read.xlsx(here("table_inputs/taxonomy_table_20221122.xlsx"
 dataset.format <- openxlsx::read.xlsx(here("table_inputs/trait_dataset_standard_format_20221118.xlsx"))
 
 # Load the trait dataset
-load(here("data_inputs/zooplankton_traits_2023_01_06.RData"))
-
-# TODO: reorder factor levels for traitID and traitName
+load(here("data_inputs/zooplankton_traits_2023_01_15.RData"))
 ```
 
 # Contents of the trait dataset
 ```{r}
+# Structure of the dataset
+# The dataset starts with identifiers (cols 1-5), followed by the core trait information of the scientific name, trait name, trait value, trait unit, and data type. Many traits have ancillary information (cols 11-25) such as life stage, temperature, and notes. This are followed by the references (cols 26-29) and the taxonomic information (30-40) associated with the trait record. All taxa have a taxonID and most have an aphiaID to link it with the WoRMS database. 
+colnames(zooplankton.traits)
+
 # What traits are available?
-# The current dataset has 63 traits assigned to 5 general trait buckets.
-length(unique(directory.trait$traitName)) 
+# The current dataset has 28 traits distributed to 63 traitNames assigned to 5 general trait buckets. Traits have a dataset-specific traitName which were assigned with standardized trait units. A single trait may be represented in multiple ways and thus have unique traitIDs and traitNames (e.g., the nitrogen content trait can be "nitrogenTotal" which is the bulk total nitrogen of an individual in mg or "nitrogenPDW" which is the percent of nitrogen relative to the dry weight). Details regarding the provenance of the original trait record are retained in columns 41-50. 
+length(unique(directory.trait$trait))
+length(unique(directory.trait$traitName))
 unique(directory.trait$traitBucket)
 
-# Traits have a dataset-specific traitName which were assigned with standardized trait units. A single trait may be represented in multiple ways and thus have unique traitIDs and traitNames (e.g., the nitrogen content trait can be "nitrogenTotal" which is the bulk total nitrogen of an individual in mg or "nitrogenPDW" which is the percent of nitrogen relative to the dry weight).
+# Table of traits
 kable(select(directory.trait, traitBucket, trait, traitName, traitUnit, dataType))
 
 # The trait dataset contains information in 3 data types. "Continuous" are numerical traits while categorical traits are coded as characters. Many of the categorical traits would have a binary version in which 1 represents presence of a trait and 0 represents absence.
 unique(directory.trait$dataType)
 
+# For now, we can review the coverage of traits without the binary traits.
+zooplankton.traits %>%
+  filter(dataType == "binary") %>% 
+  distinct(traitName)
 
-# Number of taxon observation per trait. The number of taxa with trait records vary with bodyLengthMax having the most trait data. The coverage of rate trait data is limited because this dataset includes only trait observations with temperature information and most have an associated measure of weight.
-zooplankton.traits %>% 
-  group_by(traitID, traitName) %>% 
-  count()
+zooplankton.traits <- zooplankton.traits %>% 
+  filter(dataType != "binary")
 
+# TODO: reorder factor levels for traitID and traitName
+```
+
+# Trait coverage
+## Species-TraitName
+This lists the traits and counts the number of species-level records for a specific traitName.
+```{r, fig.height=3}
+# This is the number of taxon observation per trait. The number of taxa with trait records vary with bodyLengthMax having the most trait data. The coverage of rate trait data is limited because this dataset includes only trait observations with temperature information.
+traits.summary <- zooplankton.traits %>% 
+  # For the summary, we can consider only records at the species and subspecies level.
+  filter(rank %in% c("Species","Subspecies")) %>% 
+  # Add information about the trait bucket 
+  left_join(distinct(directory.trait, traitBucket, traitID),
+            by = "traitID") %>% 
+  # Assign trait buckets as factors
+  mutate(traitBucket = factor(traitBucket, 
+                              levels = c("morphological","composition",
+                                         "physiological","behavioral",
+                                         "life history"))) %>% 
+  # Isolate relevant columns
+  distinct(traitBucket, traitID, traitName, taxonID) %>% 
+  # Add up the number of taxon records per trait
+  group_by(traitBucket, traitName, traitID) %>% 
+  summarise(Nspecies = n()) %>% 
+  ungroup() %>% 
+  # Arrange the traits in decreasing order for the figure
+  arrange(-Nspecies) %>% 
+  mutate(traitName = fct_reorder(traitName, Nspecies))
+  
+
+# Stacked barplot with count at end
+trait.bar <- ggplot(traits.summary, aes(x = traitName, y = Nspecies)) +
+  geom_bar(stat = "identity") +
+  # Set axis break
+  scale_y_continuous(breaks = c(0, 250, 500, 750, 3000),
+                     limits = c(0, 3200)) +
+  scale_y_break(c(950,2950), expand = FALSE) +
+  # Add number of species at the end of the bar
+  geom_text(aes(label = after_stat(y), group = traitName),
+            stat = "summary", fun = sum, hjust = -0.1,
+            size = 3) +
+  coord_flip() +
+  xlab("Trait") + ylab("# Species") +
+  # facets proportioned by number of traits
+  facet_grid(traitBucket ~., scales = "free_y", space = "free", switch = "y") +
+  theme_bw() +
+  theme(strip.placement = "outside") 
+trait.bar
+```
+## Species-TraitName by major group
+We can visualize the taxonomic coverage by major group.
+```{r, fig.height=3}
+# Assign colors to major groups
+majorgroup.colors <- data.frame(
+  majorgroup = c("Calanoid","Non-calanoid","Amphipod","Decapod","Euphausiid",
+                 "Mysid","Ostracod","Polychaete","Pteropod",
+                 "Chaetognath","Appendicularian","Thaliacean","Cladoceran",
+                 "Hydromedusae","Siphonophore","Scyphomedusae","Cubozoan","Ctenophore"),
+  color = c("blue","yellowgreen","cornflowerblue","lightseagreen","forestgreen",
+            "darkseagreen2","cyan3","tan1","olivedrab",
+            "darkorchid","violetred","hotpink3","saddlebrown",
+            "tomato1","goldenrod3","yellow3","lemonchiffon2","red4"))
+            
+# This is similar to the chunk above but with different groupings
+traits.summary <- zooplankton.traits %>% 
+  # For the summary, we can consider only records at the species and subspecies level.
+  filter(rank %in% c("Species","Subspecies")) %>% 
+  # Add information about the trait bucket 
+  left_join(distinct(directory.trait, traitBucket, traitID),
+            by = "traitID") %>% 
+  # Assign trait buckets as factors
+  mutate(traitBucket = factor(traitBucket, 
+                              levels = c("morphological","composition",
+                                         "physiological","behavioral",
+                                         "life history"))) %>% 
+  # Isolate relevant columns
+  distinct(traitBucket, traitID, traitName, majorgroup, taxonID) %>% 
+  # Add up the number of taxon records per trait
+  group_by(traitBucket, traitName, majorgroup, traitID) %>% 
+  # Set the levels of the major groups
+  mutate(majorgroup = factor(majorgroup, 
+                             levels = majorgroup.colors$majorgroup)) %>% 
+  summarise(Nspecies = n()) %>% 
+  ungroup() %>% 
+  # Arrange the traits in decreasing order for the figure
+  group_by(traitBucket, traitName) %>% 
+  mutate(Nspecies.total = sum(Nspecies)) %>% 
+  ungroup() %>% 
+  arrange(-Nspecies.total) %>% 
+  mutate(traitName = fct_reorder(traitName, Nspecies.total)) 
+  
+# Stacked barplot with count at end
+trait.bar <- ggplot(traits.summary, aes(x = traitName, y = Nspecies,
+                                        fill = majorgroup)) +
+  geom_bar(stat = "identity") +
+  # Set axis break
+  scale_y_continuous(breaks = c(0, 250, 500, 750, 1000, 3000),
+                     limits = c(0, 3200)) +
+  scale_y_break(c(1200,2950), expand = FALSE) +
+  # Add number of species at the end of the bar
+  geom_text(aes(label = after_stat(y), group = traitName),
+            stat = "summary", fun = sum, hjust = -0.1,
+            size = 3) +
+  scale_fill_manual(values = majorgroup.colors$color,
+                    limits = majorgroup.colors$majorgroup,
+                    name = "Major group") +
+  coord_flip() +
+  xlab("Trait") + ylab("# Species") +
+  # facets proportioned by number of traits
+  facet_grid(traitBucket ~., scales = "free_y", space = "free", switch = "y") +
+  theme_bw() +
+  theme(strip.placement = "outside") 
+trait.bar
+```
+
+## Number of traits per species
+Here, we inspect the number of traits per species and continue to check how evenly distributed the dataset is. This figure shows that most species have only a few traits assigned to them, but there are a few species with a lot of trait information known.
+```{r}
+traits.summary.2 <- zooplankton.traits %>% 
+  filter(rank %in% c("Species","Subspecies")) %>% 
+  distinct(traitName, scientificName, taxonID) %>% 
+  group_by(taxonID, scientificName) %>% 
+  summarise(Ntraits = n()) %>% 
+  arrange(-Ntraits)
+
+head(traits.summary.2)
+
+traits.summary.2 <- traits.summary.2 %>% 
+  group_by(Ntraits) %>% 
+  summarise(Ntraits.total = sum(Ntraits)) %>% 
+  ungroup() %>% 
+  arrange(-Ntraits)
+
+ggplot(traits.summary.2, aes(x = Ntraits, y = cumsum(Ntraits.total))) +
+  geom_line() + 
+  xlab("Number of traits per species") +
+  ylab("Number of records")
 ```
 
 

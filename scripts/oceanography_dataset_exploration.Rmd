@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Load libraries and files
 ```{r}
+library(here)
 source(here("functions/R_package_check.R"))
 prepareLibrary()
 source(here("functions/QOL_toolkit.R"))

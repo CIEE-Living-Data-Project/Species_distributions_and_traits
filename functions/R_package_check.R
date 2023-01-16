@@ -19,6 +19,7 @@ packages <-
     "PBSmapping",
     "cowplot",
     "viridis",
+    "ggbreak", #cite: 10.3389/fgene.2021.774846
     "Polychrome")
 
 package.check <- lapply(
