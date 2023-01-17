@@ -1,6 +1,6 @@
 # R packages check and download
 # Created by P. Pata
-# Last modified January 12, 2023
+# Last modified January 16, 2023
 #
 # This checks and loads the local library if the required packages for this 
 # R project are present. If not, the packages are downloaded from CRAN.
@@ -20,6 +20,7 @@ packages <-
     "cowplot",
     "viridis",
     "ggbreak", #cite: 10.3389/fgene.2021.774846
+    "plotly",
     "Polychrome")
 
 package.check <- lapply(
