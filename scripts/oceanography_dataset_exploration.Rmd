@@ -39,8 +39,28 @@ colnames(nepacLLhigh) <- c("group", "POS", "lon", "lat") # rename columns
 colnames(nepacLL) <- c("group", "POS", "lon", "lat")
 ```
 
-# Distribution of CTD samples
+Filter the physical data
 ```{r}
+physics.ctd <- physics.ctd %>% 
+  dplyr::select(NetKey, CTD, CTDKey, BottleKey, ctdnum, 
+                TempI10, TempI50, TempINet, 
+                SaliI10, SaliI50, SaliINet,
+                DensI10, DensI50, DensINet,
+                OxygI10, OxygI50, OxygINet)
+```
+
+
+# Distribution of CTD samples
+A common sensor in oceanographic studies is the CTD (conductivity, temperature, depth). Conductivity is used to calculate for salinity. Additional sensors, such as a dissolved oxygen sensor, are often attached to the CTD system. A CTD sensor is typically deployed from research vessels and drops to a target depth, often just above the bottom of the ocean. It logs physical variables along the way and these are generally interpolated into 1 m depth bins. 
+
+The physics dataset includes CTD data for salinity, temperature, and oxygen. Density was calculated from the temperature, salinity, and pressure information. The data are provided as depth-integrated average values from the surface to either 10 m, 50 m, or net tow depth. The variables have a suffix of I10, I50, or INet corresponding to the integration depth.
+
+Here, we will first explore the spatial and temporal distribution of the CTD data. Notice that the CTD data were collected all over the Strait of Georgia and there are may overlapping points. Both spatially and temporally, the sampling frequency is uneven. Although there are permanent stations which are regularly monitored.
+
+```{r}
+# Structure of the physics data
+colnames(physics.ctd)
+
 # Subset columns with CTD data
 ctd.SOG <- physics.meta %>% 
   filter(!is.na(CTDKey))
@@ -57,28 +77,77 @@ SOGmap <- ggplot() +
 # Spatial distribution of samples. Note that there are multiple overlapping points and there are a few stations that are regularly sampled.
 SOGmap +
   geom_point(data = ctd.SOG, aes(x = Longitude, y = Latitude,
-                                       color = `Depth_Bottom.m.`)) +
+                                       color = `Depth_Bottom.m.`),
+             alpha = 0.5) +
   ggtitle("Distribution of CTD samples")
-
 
 # Temporal distribution of samples
 ggplot(data = ctd.SOG, aes(x = dayofyear, y = Year)) +
-  geom_point(aes(color = Twilight)) +
+  geom_point(aes(color = Twilight), alpha = 0.5) +
+  # Roughly mark seasons
+  geom_vline(xintercept = c(32,120,212,304), linetype="dotted", color = "blue")
+
+# List most common research stations
+ctd.SOG %>% 
+  group_by(Station) %>% 
+  count() %>% 
+  arrange(-n) 
+  head(10)
+  
+# Update the map and temporal distribution to reflect these stations
+# Create a new variable Station2 which indicates if in the three main stations of not
+ctd.SOG <- ctd.SOG %>% 
+  mutate(Station2 = if_else(Station %in% c("GEO1","CPF1","CPF2"),
+                            Station, "Other"))
+SOGmap +
+  geom_point(data = ctd.SOG, aes(x = Longitude, y = Latitude,
+                                       color = Station2),
+             alpha = 0.5) +
+  ggtitle("Distribution of CTD samples")
+
+ggplot(data = ctd.SOG, aes(x = dayofyear, y = Year)) +
+  geom_point(aes(color = Station2), alpha = 0.5, size = 2) +
   # Roughly mark seasons
   geom_vline(xintercept = c(32,120,212,304), linetype="dotted", color = "blue")
 
 ```
 
-# TODO: contents of the data files
 
 # Time series of ctd data
+Here, we do a simple curation of the physics data and present a monthly averaged CTD time series.
 ```{r}
+ctd.ts <- physics.ctd %>% 
+  # Merge some metadata
+  left_join(distinct(ctd.SOG, CTDKey, Station, Longitude, Latitude,
+                     Year, Month, Day), by = "CTDKey") %>% 
+  # Here, we will only consider plotting the time series of the 3 most common stations.
+  filter(Station %in% c("GEO1","CPF1","CPF2")) %>% 
+  # Lengthen the data frame
+  pivot_longer(cols = c("TempI10", "TempI50", "TempINet", 
+                        "SaliI10", "SaliI50", "SaliINet",
+                        "DensI10", "DensI50", "DensINet",
+                        "OxygI10", "OxygI50", "OxygINet"),
+               names_to = "Variable", values_to = "Value") %>% 
+  filter(!is.na(Value)) %>% 
+  # Calculate monthly averages
+  group_by(Year, Month, Variable) %>% 
+  summarise(Value = mean(Value), n = n()) %>% 
+  ungroup() %>% 
+  # Derive Year-Month variable for plotting
+  mutate(YearMonth = Year + (Month - 1)/12)
+
+# Visualize the time series for the upper 50 m  CTD values
+ggplot(data = filter(ctd.ts, Variable %in% c("TempI50","SaliI50","DensI50","OxygI50")),
+       aes(YearMonth, Value)) + 
+  geom_point() +
+  facet_wrap(~Variable, ncol = 1, scales = "free_y")
 
 ```
 
 
 
 # Calculating the average chlorophyll time series from gridded satellite data
+Chlorophyll a and other ocean color variables could be collected from satellites that orbit the Earth. Here, we provide gridded satellite-derived chlorophyll values for the Strait of Georgia. 
 ```{r}
 colnames(satellite.chl.grid)
 
