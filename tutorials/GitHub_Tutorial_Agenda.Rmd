@@ -1,0 +1,31 @@
+---
+title: "Workshop: Collaborating through GitHub"
+author: "Sam Straus"
+output: html_document
+---
+
+### Pre-session tasks tutorial:
+
+-   see `Github_PREP.html`
+-   set up github account
+-   install git
+-   set up PAT before the start of the meeting
+-   install github desktop app
+
+### Agenda (00:00 - 01:00):
+
+-   Short presentation on why github is important (00:00 - 00:15)
+
+-   Get WG participants comfortable using basic github functions (00:15 - 00: 35)
+
+    -   Create and clone repo
+    -   Create file
+    -   Commit & push
+
+-   Get comfortable with advanced functions (00:35 - 00:55)
+
+    -   Partners clone each other's repos
+    -   Branch, make change, push
+    -   Pull request, merge, delete branch
+
+-   Wrap up (00:55 - 1:00)
