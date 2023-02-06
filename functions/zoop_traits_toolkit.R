@@ -65,6 +65,15 @@ convertRateT2WS <- function(df, sizeAssoc, trtName1, trtName2, trtUnit) {
   D.2 <- df %>% 
     filter(traitName == trtName2) %>% 
     filter(taxonID %notin% D.1$taxonID) %>% 
+    # Derived columns are the original columns
+    mutate(verbatimScientificName = scientificName,
+           verbatimTraitName = traitName,
+           verbatimTraitValue = as.character(traitValue),
+           verbatimTraitUnit = traitUnit,
+           verbatimLifeStage = lifeStage,
+           verbatimNotes = notes,
+           isMerged = FALSE,
+           mergedTraitTaxonIDs = traitTaxonID) %>% 
     select(-c(sizeAssocName, sizeAssocValue, sizeAssocUnit, sizeAssocReference)) %>% 
     left_join(sizeAssoc, by = "taxonID") %>% 
     filter(!is.na(sizeAssocValue)) %>% 
@@ -73,20 +82,31 @@ convertRateT2WS <- function(df, sizeAssoc, trtName1, trtName2, trtUnit) {
            traitValue = traitValue/sizeAssocValue,
            traitUnit = trtUnit,
            traitValueSource = "derived",
-           notes = cleanStrings(paste0("Calculated from ",trtName1,
-                                       " and ",trtName2,"; ", notes)),
+           traitValueSD = NaN,
+           traitValueN = 1,
+           notes = paste0("Calculated from ",trtName1," and ",
+                          trtName2,"; based on", traitTaxonID),
            maxObsNum = 0) %>% 
     ungroup() %>% 
-    updateIDs(trait.directory)
+    standardizeID(trait.directory)
 }
 
-# For converting from percent to bulk total composition
+# for converting between bulk and percent composition
 convertPW2Total <- function(df, sizeAssoc, trtName1, trtName2, trtUnit = "mg"){
   D.1 <- df %>% 
     filter(traitName == trtName1)
   D.2 <- df %>% 
     filter(traitName  == trtName2) %>% 
     filter(taxonID %notin% D.1$taxonID) %>% 
+    # Derived columns are the original columns
+    mutate(verbatimScientificName = scientificName,
+           verbatimTraitName = traitName,
+           verbatimTraitValue = as.character(traitValue),
+           verbatimTraitUnit = traitUnit,
+           verbatimLifeStage = lifeStage,
+           verbatimNotes = notes,
+           isMerged = FALSE,
+           mergedTraitTaxonIDs = traitTaxonID) %>% 
     select(-c(sizeAssocName, sizeAssocValue, sizeAssocUnit, sizeAssocReference)) %>% 
     left_join(sizeAssoc, by = "taxonID") %>% 
     filter(!is.na(sizeAssocValue)) %>% 
@@ -95,21 +115,32 @@ convertPW2Total <- function(df, sizeAssoc, trtName1, trtName2, trtUnit = "mg"){
            traitValue = traitValue*sizeAssocValue / 100,
            traitUnit = trtUnit,
            traitValueSource = "derived",
-           notes = cleanStrings(paste0("Calculated from ",trtName1,
-                                       " and ",trtName2,"; ", notes)),
+           traitValueSD = NaN,
+           traitValueN = 1,
+           notes = paste0("Calculated from ",trtName1," and ",
+                          trtName2,"; based on", traitTaxonID),
            maxObsNum = 0) %>% 
     ungroup() %>% 
-    updateIDs(trait.directory)
+    standardizeID(trait.directory)
+  # updateIDs(trait.directory)
 }  
 
 
-# For converting from bulk total to percent composition
 convertTotal2PW <- function(df, sizeAssoc, trtName1, trtName2, trtUnit = "percent") {
   D.1 <- df %>% 
     filter(traitName == trtName1)
   D.2 <- df %>% 
     filter(traitName  == trtName2) %>% 
     filter(taxonID %notin% D.1$taxonID) %>% 
+    # Derived columns are the original columns
+    mutate(verbatimScientificName = scientificName,
+           verbatimTraitName = traitName,
+           verbatimTraitValue = as.character(traitValue),
+           verbatimTraitUnit = traitUnit,
+           verbatimLifeStage = lifeStage,
+           verbatimNotes = notes,
+           isMerged = FALSE,
+           mergedTraitTaxonIDs = traitTaxonID) %>% 
     select(-c(sizeAssocName, sizeAssocValue, sizeAssocUnit, sizeAssocReference)) %>% 
     left_join(sizeAssoc, by = "taxonID") %>% 
     filter(!is.na(sizeAssocValue)) %>% 
@@ -118,130 +149,17 @@ convertTotal2PW <- function(df, sizeAssoc, trtName1, trtName2, trtUnit = "percen
            traitValue = traitValue/sizeAssocValue * 100,
            traitUnit = trtUnit,
            traitValueSource = "derived",
-           notes = cleanStrings(paste0("Calculated from ",trtName1,
-                                       " and ",trtName2,"; ", notes)),
+           traitValueSD = NaN,
+           traitValueN = 1,
+           notes = paste0("Calculated from ",trtName1," and ",
+                          trtName2,"; based on", traitTaxonID),
            maxObsNum = 0) %>% 
     ungroup() %>% 
-    updateIDs(trait.directory) %>% 
+    # updateIDs(trait.directory) %>% 
+    standardizeID(trait.directory) %>% 
     filter(traitValue <= 100)
 }
 
-# Assign major group based on a row/s of taxonomy information
-assignMajorGroup <- function(taxonomy){
-  taxonomy <- taxonomy %>% 
-    mutate(majorgroup = "") %>% 
-    mutate(majorgroup = if_else(class %in% c("Polychaeta"),"Polychaete",majorgroup)) %>% 
-    mutate(majorgroup = if_else(phylum %in% c("Chaetognatha"),"Chaetognath",majorgroup)) %>% 
-    mutate(majorgroup = if_else(class %in% c("Branchiopoda"),"Cladoceran",majorgroup)) %>% 
-    mutate(majorgroup = if_else(phylum %in% c("Ctenophora"),"Ctenophore",majorgroup)) %>% 
-    mutate(majorgroup = if_else(class %in% c("Scyphozoa"),"Scyphomedusae",majorgroup)) %>%  
-    mutate(majorgroup = if_else(order %in% c("Siphonophorae"),"Siphonophore",majorgroup)) %>%  
-    mutate(majorgroup = if_else(order %in% c("Narcomedusae","Leptothecata",
-                                             "Trachymedusae","Limnomedusae",
-                                             "Anthoathecata"),
-                                "Hydromedusae",majorgroup)) %>% 
-    mutate(majorgroup = if_else(order %in% c("Pteropoda"),"Pteropod",majorgroup)) %>% 
-    mutate(majorgroup = if_else(class %in% c("Thaliacea"), "Thaliacean",majorgroup)) %>% 
-    mutate(majorgroup = if_else(class %in% c("Appendicularia"),
-                                "Appendicularian",majorgroup)) %>% 
-    mutate(majorgroup = if_else(class %in% c("Ostracoda"), "Ostracod",majorgroup)) %>% 
-    mutate(majorgroup = if_else(class %in% c("Copepoda"),"Non-calanoid",majorgroup)) %>% 
-    mutate(majorgroup = if_else(order %in% c("Calanoida"),"Calanoid",majorgroup)) %>% 
-    mutate(majorgroup = if_else(order %in% c("Amphipoda"),"Amphipod",majorgroup)) %>% 
-    mutate(majorgroup = if_else(order %in% c("Decapoda"),"Decapod",majorgroup)) %>% 
-    mutate(majorgroup = if_else(order %in% c("Euphausiacea"),"Euphausiid",majorgroup)) %>%
-    mutate(majorgroup = if_else(order %in% c("Mysida","Mysidacea"),
-                                "Mysid",majorgroup)) 
-  return(taxonomy$majorgroup)
-}
-
-# For updating the maximum observation number of a trait and taxon.
-# This is important when modifying trait records.
-getMaxObsNum <- function(tN, tI, df) {
-  df <- df %>% 
-    filter(traitName == tN & taxonID == tI)
-  if (nrow(df) > 0) {
-    i <- max(df$observationNumber)
-  } else {
-    i <- 0
-  }
-  i
-}
-
-# For updating trait IDs and taxon-trait-IDs 
-updateIDs <- function(data, trait.directory){
-  col.order <- colnames(data)
-  data <- data %>% 
-    select(-c(traitID, traitUnit)) %>% 
-    left_join(distinct(trait.directory, traitID, traitName, traitUnit), by = "traitName")  %>% 
-    group_by(traitID,taxonID) %>% 
-    mutate(observationNumber = maxObsNum + row_number()) %>% 
-    mutate(traitTaxonID = paste0(traitID,"-",taxonID,"-",observationNumber)) %>% 
-    mutate(maxObsNum = max(observationNumber)) %>% 
-    ungroup() %>% 
-    relocate(col.order)
-}
-
-# For standardizing individual trait files 
-standardizeTable <- function(file.list, s.format, taxonomy, lifestagelist,
-                             trait.directory) {
-  data <- s.format
-  for(i in file.list) {
-    d <- openxlsx::read.xlsx(paste0(infol,i)) %>% 
-      mutate(secondaryReference = as.character(secondaryReference))
-    if("traitUnit" %notin% colnames(d)){
-      d <- d %>% 
-        mutate(traitUnit = NA)
-    }
-    if("verbatimTraitUnit" %notin% colnames(d)){
-      d <- d %>% 
-        mutate(verbatimTraitUnit = NA)
-    }
-    d <- d %>%  
-      mutate(traitValue = as.character(traitValue),
-             verbatimTraitValue = as.character(verbatimTraitValue)) %>% 
-      # set traitID, traitName based on trait directory
-      select(-c(traitName, traitUnit)) %>%
-      left_join(select(trait.directory, traitID, traitName, 
-                       verbatimTraitName, verbatimTraitUnit),
-                by = c("verbatimTraitName","verbatimTraitUnit"))
-    
-    if("traitValueN" %in% colnames(d)) {
-      d$traitValueN <- as.numeric(str_trim(d$traitValueN))
-    }
-    if("traitValueTemperature" %in% colnames(d)) {
-      d$traitValueTemperature <- as.character(d$traitValueTemperature)
-    }
-    if("lifeStage" %in% colnames(d)) {
-      d$lifeStage <- as.character(d$lifeStage)
-    }
-    if("location" %in% colnames(d)) {
-      d$location <- as.character(d$location)
-    }
-    if("notes" %in% colnames(d)) {
-      d$notes <- as.character(d$notes)
-    }
-    data <- data %>% 
-      bind_rows(d)
-  }
-  # Annotate taxonomy information
-  data <- annotateTaxonomy(data, taxonomy) %>% 
-    # Set stage ID
-    annotateLifeStage(lifestagelist) %>% 
-    # Record file generation time stamp
-    mutate(uploadBy = "P. Pata", uploadDate = ymd(Sys.Date())) %>% 
-    # Remove not in mesozooplankton major groups of interest
-    filter(!is.na(majorgroup)) %>% 
-    # assign traittaxonID
-    group_by(traitID,taxonID) %>% 
-    mutate(traitTaxonID = paste0(traitID,"-",taxonID,"-",row_number())) %>% 
-    ungroup() %>% 
-    # trait unit = verbatim trait unit if empty
-    mutate(traitUnit = if_else(is.na(traitUnit), verbatimTraitUnit, traitUnit)) %>% 
-    # assign trait value source
-    mutate(traitValueSource = "literature") %>% 
-    relocate(colnames(s.format))
-}
 
 
 # for merging duplicated trait values
@@ -306,10 +224,257 @@ mergeTraitDetails <- function(df, trait.directory) {
            mergedTraitTaxonIDs = cleanStrings(traitTaxonID) )%>% 
     distinct(mergedTraitTaxonIDs, .keep_all = TRUE) %>% 
     ungroup() %>% 
-    updateIDs(trait.directory) %>% 
+    # mutate(observationNumber = NA) %>% 
+    updateIDs() %>% 
     mutate(notes = cleanStrings(paste("Trait value merged from multiple records; ", notes))) %>% 
     # update upload date
     mutate(uploadBy = "P. Pata", uploadDate = as.character(ymd(Sys.Date())))
+  
+  df <- bind_rows(df.same, df.updated) %>% 
+    select(-dup)
+}
+
+# Function for selecting the average associated size for a trait value. If there
+#   are multiple size types for a trait, the one with the highest sample size 
+#   will be selected. References will also be summarized. Note that this may be 
+#   a useful reference but it does not correspond to the species-average size 
+#   value. For analyses requiring comparing the trait with size, it might be 
+#   better to use the species-averaged size instead of the averaged sizeAssocValue.
+summarise.sizeAssoc <- function(df) {
+  A <- df %>% 
+    select(traitID, taxonID,
+           sizeAssocName, sizeAssocValue, sizeAssocUnit, sizeAssocReference) %>% 
+    filter(!is.na(sizeAssocValue)) %>% 
+    group_by(traitID, taxonID, sizeAssocName, sizeAssocUnit) %>% 
+    # mutate(N = n(),
+    #        Nmax = max(N)) %>% 
+    # ungroup() %>% 
+    # filter(N == Nmax) %>% 
+    # group_by(traitID, taxonID, traitUnit) %>% 
+    mutate(sizeAssocN = n(),
+           sizeAssocSD = sd(sizeAssocValue, na.rm = TRUE),
+           sizeAssocValue = mean(sizeAssocValue, na.rm = TRUE),
+           sizeAssocReference = cleanStrings(paste(sizeAssocReference, 
+                                                   collapse = "; "))) %>% 
+    ungroup() %>% 
+    distinct(traitID, taxonID, 
+             sizeAssocName, sizeAssocValue, sizeAssocUnit, sizeAssocReference,
+             sizeAssocN, sizeAssocSD) %>% 
+    # arrange and get first instance
+    group_by(traitID, taxonID) %>% 
+    arrange(sizeAssocN) %>% 
+    filter(row_number() == 1)
+}
+
+# Update the trait ID and unit when standardizing raw data
+standardizeID <- function(data, trait.directory){
+  col.order <- colnames(data)
+  data <- data %>% 
+    select(-c(traitID)) %>% 
+    left_join(distinct(trait.directory, traitID, traitName), by = "traitName")  %>% 
+    relocate(col.order)
+}
+standardizeUnit <- function(data, trait.directory){
+  col.order <- colnames(data)
+  data <- data %>% 
+    select(-c(traitUnit)) %>% 
+    left_join(distinct(trait.directory, traitName, traitUnit), by = "traitName")  %>% 
+    relocate(col.order)
+}
+
+# For updating trait IDs and taxon-trait-IDs 
+updateIDs <- function(data){
+  col.order <- colnames(data)
+  data <- data %>% 
+    group_by(traitID,taxonID) %>% 
+    mutate(maxObsNum = max(observationNumber)) %>% 
+    mutate(maxObsNum = if_else(!is.na(maxObsNum), maxObsNum, 0)) %>% 
+    # if there is no observation number, assign one
+    mutate(observationNumber = if_else(!is.na(observationNumber),
+                                       observationNumber, 
+                                       maxObsNum + row_number())) %>% 
+    mutate(maxObsNum = max(observationNumber)) %>% 
+    # if there is no traitTaxonID, assign one
+    mutate(traitTaxonID = if_else(is.na(traitTaxonID), 
+                                  paste0(traitID,"-",taxonID,"-",observationNumber),
+                                  traitTaxonID)) %>% 
+    ungroup() %>% 
+    relocate(col.order)
+}
+
+# Assign major group based on a row/s of taxonomy information
+assignMajorGroup <- function(taxonomy){
+  taxonomy <- taxonomy %>% 
+    mutate(majorgroup = "") %>% 
+    mutate(majorgroup = if_else(class %in% c("Polychaeta"),"Polychaete",majorgroup)) %>% 
+    mutate(majorgroup = if_else(phylum %in% c("Chaetognatha"),"Chaetognath",majorgroup)) %>% 
+    mutate(majorgroup = if_else(class %in% c("Branchiopoda"),"Cladoceran",majorgroup)) %>% 
+    mutate(majorgroup = if_else(phylum %in% c("Ctenophora"),"Ctenophore",majorgroup)) %>% 
+    mutate(majorgroup = if_else(class %in% c("Scyphozoa"),"Scyphomedusae",majorgroup)) %>%  
+    mutate(majorgroup = if_else(order %in% c("Siphonophorae"),"Siphonophore",majorgroup)) %>%  
+    mutate(majorgroup = if_else(order %in% c("Narcomedusae","Leptothecata",
+                                             "Trachymedusae","Limnomedusae",
+                                             "Anthoathecata"),
+                                "Hydromedusae",majorgroup)) %>% 
+    mutate(majorgroup = if_else(order %in% c("Pteropoda"),"Pteropod",majorgroup)) %>% 
+    mutate(majorgroup = if_else(class %in% c("Thaliacea"), "Thaliacean",majorgroup)) %>% 
+    mutate(majorgroup = if_else(class %in% c("Appendicularia"),
+                                "Appendicularian",majorgroup)) %>% 
+    mutate(majorgroup = if_else(class %in% c("Ostracoda"), "Ostracod",majorgroup)) %>% 
+    mutate(majorgroup = if_else(class %in% c("Copepoda"),"Non-calanoid",majorgroup)) %>% 
+    mutate(majorgroup = if_else(order %in% c("Calanoida"),"Calanoid",majorgroup)) %>% 
+    mutate(majorgroup = if_else(order %in% c("Amphipoda"),"Amphipod",majorgroup)) %>% 
+    mutate(majorgroup = if_else(order %in% c("Decapoda"),"Decapod",majorgroup)) %>% 
+    mutate(majorgroup = if_else(order %in% c("Euphausiacea"),"Euphausiid",majorgroup)) %>%
+    mutate(majorgroup = if_else(order %in% c("Mysida","Mysidacea"),
+                                "Mysid",majorgroup)) 
+  return(taxonomy$majorgroup)
+}
+
+# For updating the maximum observation number of a trait and taxon.
+# This is important when modifying trait records.
+getMaxObsNum <- function(tN, tI, df) {
+  df <- df %>% 
+    filter(traitName == tN & taxonID == tI)
+  if (nrow(df) > 0) {
+    i <- max(df$observationNumber)
+  } else {
+    i <- 0
+  }
+  i
+}
+
+
+# For standardizing individual trait files 
+standardizeTable <- function(file.list, s.format, taxonomy, lifestagelist,
+                             trait.directory, rev.by = "") {
+  data <- s.format
+  for(i in file.list) {
+    d <- openxlsx::read.xlsx(paste0(infol,i)) %>% 
+      mutate(secondaryReference = as.character(secondaryReference))
+    if("traitUnit" %notin% colnames(d)){
+      d <- d %>% 
+        mutate(traitUnit = NA)
+    }
+    if("verbatimTraitUnit" %notin% colnames(d)){
+      d <- d %>% 
+        mutate(verbatimTraitUnit = NA)
+    }
+    d <- d %>%  
+      mutate(traitValue = as.character(traitValue),
+             verbatimTraitValue = as.character(verbatimTraitValue)) %>% 
+      # set traitID, traitName based on trait directory
+      select(-c(traitName, traitUnit)) %>%
+      left_join(select(trait.directory, traitID, traitName, 
+                       verbatimTraitName, verbatimTraitUnit),
+                by = c("verbatimTraitName","verbatimTraitUnit"))
+    
+    if("traitValueN" %in% colnames(d)) {
+      d$traitValueN <- as.numeric(str_trim(d$traitValueN))
+    }
+    if("traitValueTemperature" %in% colnames(d)) {
+      d$traitValueTemperature <- as.character(d$traitValueTemperature)
+    }
+    if("lifeStage" %in% colnames(d)) {
+      d$lifeStage <- as.character(d$lifeStage)
+    }
+    if("location" %in% colnames(d)) {
+      d$location <- as.character(d$location)
+    }
+    if("notes" %in% colnames(d)) {
+      d$notes <- as.character(d$notes)
+    }
+    data <- data %>% 
+      bind_rows(d)
+  }
+  # Annotate taxonomy information
+  data <- annotateTaxonomy(data, taxonomy) %>% 
+    # Set stage ID
+    annotateLifeStage(lifestagelist) %>% 
+    # Record file generation time stamp
+    mutate(uploadBy = rev.by, uploadDate = ymd(Sys.Date())) %>% 
+    # Remove not in mesozooplankton major groups of interest
+    filter(!is.na(majorgroup)) %>% 
+    # assign traittaxonID
+    group_by(traitID,taxonID) %>% 
+    mutate(observationNumber = row_number()) %>% 
+    mutate(traitTaxonID = paste0(traitID,"-",taxonID,"-",observationNumber)) %>% 
+    mutate(maxObsNum = max(observationNumber)) %>% 
+    ungroup() %>% 
+    # trait unit = verbatim trait unit if empty
+    mutate(traitUnit = if_else(is.na(traitUnit), verbatimTraitUnit, traitUnit)) %>% 
+    # assign trait value source
+    mutate(traitValueSource = "literature") %>% 
+    relocate(colnames(s.format))
+}
+
+
+# for merging duplicated trait values
+mergeTraitDetails <- function(df, trait.directory, rev.by = "") {
+  df <- df %>% 
+    mutate(dup = n())
+  
+  df.same <- df %>% 
+    filter(dup == 1) %>% 
+    mutate(isMerged = FALSE) %>% 
+    ungroup()
+  
+  df.updated <- df %>% 
+    filter(dup > 1) %>% 
+    mutate(isMerged = TRUE)  %>% 
+    mutate(primaryReference = paste(primaryReference, collapse = "; "),
+           primaryReferenceDOI = paste(primaryReferenceDOI, collapse = "; "),
+           secondaryReference = paste(secondaryReference, collapse = "; "),
+           secondaryReferenceDOI = paste(secondaryReferenceDOI, collapse = "; "),
+           lifeStage = paste(lifeStage, collapse = "; "),
+           sizeType = paste(sizeType, collapse = "; "), 
+           # sizeAssocName = paste(sizeAssocName, collapse = "; "), 
+           # sizeAssocUnit = paste(sizeAssocUnit, collapse = "; "), 
+           # sizeAssocValue = paste(sizeAssocValue, collapse = "; "), 
+           # sizeAssocReference = paste(sizeAssocReference, collapse = "; "), 
+           location = paste(location, collapse = "; "), 
+           # longitude = paste(longitude, collapse = "; "), 
+           # latitude = paste(latitude, collapse = "; "), 
+           notes = paste(notes, collapse = "; "),
+           traitValueSource = paste(traitValueSource, collapse = "; "), 
+           traitValueMeasurementNotes = paste(traitValueMeasurementNotes, collapse = "; "), 
+           verbatimScientificName = paste(verbatimScientificName, collapse = "; "), 
+           verbatimTraitName = paste(verbatimTraitName, collapse = "; "), 
+           verbatimTraitValue = paste(verbatimTraitValue), 
+           verbatimTraitUnit = paste(verbatimTraitUnit, collapse = "; "), 
+           verbatimLifeStage = paste(verbatimLifeStage, collapse = "; "), 
+           verbatimNotes = paste(verbatimNotes, collapse = "; "),
+           mergedTraitTaxonIDs = paste(traitTaxonID, collapse = "; ") ) %>% 
+    # clean strings
+    mutate(primaryReference = cleanStrings(primaryReference),
+           primaryReferenceDOI = cleanStrings(primaryReferenceDOI),
+           secondaryReference = cleanStrings(secondaryReference),
+           secondaryReferenceDOI = cleanStrings(secondaryReferenceDOI),
+           lifeStage = cleanStrings(lifeStage),
+           sizeType = cleanStrings(sizeType), 
+           # sizeAssocName = cleanStrings(sizeAssocName), 
+           # sizeAssocUnit = cleanStrings(sizeAssocUnit), 
+           # sizeAssocValue = cleanStrings(sizeAssocValue), 
+           # sizeAssocReference = cleanStrings(sizeAssocReference), 
+           location = cleanStrings(location), 
+           # longitude = cleanStrings(longitude), 
+           # latitude = cleanStrings(latitude), 
+           notes = cleanStrings(notes),
+           traitValueSource = cleanStrings(traitValueSource), 
+           traitValueMeasurementNotes = cleanStrings(traitValueMeasurementNotes), 
+           verbatimScientificName = cleanStrings(verbatimScientificName), 
+           verbatimTraitName = cleanStrings(verbatimTraitName), 
+           verbatimTraitValue = cleanStrings(verbatimTraitValue), 
+           verbatimTraitUnit = cleanStrings(verbatimTraitUnit), 
+           verbatimLifeStage = cleanStrings(verbatimLifeStage), 
+           verbatimNotes = cleanStrings(verbatimNotes),
+           mergedTraitTaxonIDs = cleanStrings(traitTaxonID) )%>% 
+    distinct(mergedTraitTaxonIDs, .keep_all = TRUE) %>% 
+    ungroup() %>% 
+    updateIDs() %>% 
+    mutate(notes = cleanStrings(paste("Trait value merged from multiple records; ", notes))) %>% 
+    # update upload date
+    mutate(uploadBy = rev.by, uploadDate = as.character(ymd(Sys.Date())))
   
   df <- bind_rows(df.same, df.updated) %>% 
     select(-dup)
@@ -416,17 +581,30 @@ getpval <- function(x){
 
 # Derives a specified regression model.
 # df is a standardized trait dataframe
-getRegressionModel <- function(df, grp, X, Y, model = "OLS"){
+getRegressionModel <- function(df, grp = "All", X, Y, 
+                               model = "OLS", base = "10"){
   trait.sub <- df %>% 
-    filter(traitName %in% c(all_of(X), all_of(Y))) %>% 
-    filter(str_detect(group, grp)) %>% 
+    filter(traitName %in% c(all_of(X), all_of(Y)))
+  if (grp != "All") {
+    trait.sub <- trait.sub %>% 
+      filter(str_detect(group, grp)) 
+  }
+  trait.sub <- trait.sub %>% 
     filter(rank %in% c("Subspecies","Species")) %>% 
     select(taxonID, scientificName, traitName, traitValue, majorgroup) %>% 
     pivot_wider(names_from = traitName, values_from = traitValue) %>% 
     filter(!is.na(get(X)) & !is.na(get(Y))) %>% 
     relocate(X, Y)
   
-  reg <- lmodel2(log10(get(Y)) ~ log10(get(X)), data = trait.sub)
+  # This calculates both the OLS and RMA
+  if(base == "10") {
+    reg <- lmodel2(log10(get(Y)) ~ log10(get(X)), data = trait.sub)
+  } else if (base == "e") {
+    reg <- lmodel2(log(get(Y)) ~ log(get(X)), data = trait.sub)
+  } else {
+    stop("Error: Please select either base 10 or e.")
+  }
+  
   
   if (model == "OLS"){
     ii <- 1
@@ -435,6 +613,8 @@ getRegressionModel <- function(df, grp, X, Y, model = "OLS"){
   } else {
     stop("Error: Please select either OLS or RMA regression model.")
   }
+  
+  # return(reg)
   
   reg.results.size <- data.frame(grp = grp, X = X,  Y = Y, 
                                  a = reg$regression.results$Intercept[ii], 
@@ -450,7 +630,7 @@ getRegressionModel <- function(df, grp, X, Y, model = "OLS"){
                                  minX = min(trait.sub[,1]), maxX = max(trait.sub[,1]))
 }
 
-# Calculate values based on an allometric conversion model
+# calculate values based on an allometric conversion model
 calculateFromModel <- function(df, model, excludeWithLit = TRUE,
                                applyToGeneralized = FALSE,
                                excludeCalculated = TRUE) {
@@ -516,9 +696,14 @@ calculateFromModel <- function(df, model, excludeWithLit = TRUE,
   
   df.calc <- df.calc %>% 
     # update units and traitTaxonIDs
-    updateIDs(trait.directory)
+    standardizeID(trait.directory) %>% 
+    group_by(traitID,taxonID) %>% 
+    mutate(observationNumber = maxObsNum + row_number()) %>% 
+    mutate(maxObsNum = max(observationNumber)) %>% 
+    mutate(traitTaxonID = paste0(traitID,"-",taxonID,"-",observationNumber)) %>% 
+    ungroup()
+  # updateIDs()
 }
-
 
 # function for plot
 plotAllometric <- function(df, grp, X, Y) {
@@ -599,7 +784,7 @@ calculate.WSRates <- function(trait.df, traits.calculated,
            traitName = str_replace(traitName,"_15C", name.suffix),
            traitUnit = str_replace(traitUnit,"h^-1", unit.suffix),
            traitValueSource = "calculated") %>% 
-    updateIDs(trait.directory) %>% 
+    standardizeID(trait.directory) %>% 
     mutate(traitValue = as.character(traitValue))
   
 }

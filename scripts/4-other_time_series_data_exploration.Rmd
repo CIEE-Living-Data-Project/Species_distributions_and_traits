@@ -1,0 +1,171 @@
+---
+title: "Exploring time series data"
+author: "Patrick Pata"
+date: '2023-02-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries and files
+```{r}
+library(here)
+source(here("functions/R_package_check.R"))
+prepareLibrary()
+source(here("functions/QOL_toolkit.R"))
+source(here("functions/getClimateIndices.R"))
+
+theme_set(theme_bw())
+set_here(path = "..")
+```
+
+# Climate indices
+The getClimateIndices() function extracts the selected climate indices. Here, we are selecting the Pacific Decadal Oscillation (PDO), North Pacific Gyre Oscillation (NPGO), and the El Niño Southern Oscillation (ENSO). There are multiple indices for ENSO and the MEI is the bimonthly ENSO index and centered between two months. The script below visualizes the monthly timeseries of climate indices.
+```{r}
+climate <- getClimateIndices(index = c("PDO","NPGO","MEI"), 
+                             year.s = 1995, year.e = 2020) %>% 
+  # Annotate columns to aid in figures.
+  mutate(Index = toupper(Index)) %>% 
+  # add year-month
+  mutate(YearMonth = Year + (Month-1)/12 ,
+         Date = lubridate::make_datetime(Year, Month)) %>% 
+  # set anomaly color scale
+  mutate(sign = if_else(Value <0, "neg","pos")) %>% 
+  mutate(sign = factor(sign, levels = c("pos","neg")))
+
+ggplot(climate, aes(x = YearMonth, y = Value, fill = sign)) +
+  # geom_point() +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = seq(1996,2020,2)) +
+  scale_color_manual(values = c("cyan4","firebrick")) +
+  xlab("Year") +
+  facet_wrap(~Index, ncol = 1, scales = "free_y") +
+  theme(legend.position = "none", strip.text.x = element_text(size = 16))
+
+```
+
+# Fraser River Discharge
+The Fraser River data is provided as either the discharge (m3/s) or the mean water level (m) as daily data or monthly means. 
+
+Source: https://wateroffice.ec.gc.ca/download/csv_help_e.html
+```{r, eval=FALSE}
+fol <- "data/fraser_river/"
+f.daily <- "daily_20230127T0319.csv"
+f.monthly <- "monthly_20230127T0316.csv"
+
+fraser.daily <- read.csv(here(paste0(fol, f.daily)), header = TRUE, skip = 1) %>% 
+  separate(Date, into = c("Year","Month","Day"), sep = "/") %>% 
+  mutate(Month = as.numeric(Month),
+         Year = as.numeric(Year),
+         Day = as.numeric(Day),
+         Parameter = if_else(PARAM == 1, "Discharge", "Water.Level")) %>% 
+  mutate(Date = lubridate::make_datetime(Year, Month, Day)) %>% 
+  mutate(DOY = yday(Date))
+
+fraser.monthly <- read.csv(here(paste0(fol, f.monthly)), header = TRUE, skip = 1) %>% 
+  separate(`MM..YYYY`, into = c("Month","Year"), sep = "--") %>% 
+  mutate(Month = as.numeric(Month),
+         Year = as.numeric(Year),
+         Parameter = if_else(PARAM == 1, "Discharge", "Water.Level")) %>% 
+  mutate(YearMonth = Year + (Month-1)/12)
+
+# Visualize the seasonal discharge pattern by plotting each year separately.
+ggplot(filter(fraser.daily, Parameter == "Discharge"),
+       aes(x = DOY, y = Value, group = Year, color = Year)) +
+  geom_line() +
+  scale_color_continuous(type = "viridis") +
+  theme(legend.position = "none")
+
+# Identify the highest discharge day of the year.
+fraser.freshet <- fraser.daily %>% 
+  filter(Parameter == "Discharge") %>% 
+  group_by(Year) %>% 
+  filter(Value == max(Value)) %>% 
+  ungroup() %>% 
+  mutate(DOY = yday(Date))
+
+ggplot(fraser.freshet, aes(x = Year, y = DOY)) +
+  geom_point() +
+  ggtitle("First day of highest discharge")
+
+# Calculate the annual average discharge from the monthly data.
+fraser.annual <- fraser.monthly %>% 
+  filter(Parameter == "Discharge") %>% 
+  group_by(Year) %>% 
+  summarise(Discharge = mean(Value), Discharge.sd = sd(Value)) %>%
+  ungroup() %>% 
+  select(-Discharge.sd)
+  
+ggplot(fraser.annual,
+       aes(x = Year, y = Discharge)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = "lm") +
+  xlab("Year") + ylab("Fraser River Annual Discharge") +
+  theme(legend.position = "none")
+
+# TODO: Calculate the anomaly of annual means
+```
+
+# Lighthouse data
+The lighthouse data stores the time series as separate folder per site. Here, we will explore the structure of the data for Chrome Island. The temperature and salinity data are provided as daily and monthly averages. We will visualize the monthly data and calculate the anomaly. The range for the baseline mean used to calculate the anomaly value is set to 1980-2010 but this can be revised.
+```{r}
+fol <- "data/bc_light_house/DATA_-_Active_Sites/Chrome_Island/"
+f.temp <- "Chrome_Island_-_Average_Monthly_Sea_Surface_Temperatures_1961-2022.csv"
+f.sal <- "Chrome_Island_-_Average_Monthly_Sea_Surface_Salinities_1961-2022.csv"
+
+# Sea surface temperature
+sst.monthly <- read.csv(here(paste0(fol,f.temp)), header = TRUE, skip = 1 )
+colnames(sst.monthly) <- c("Year","1","2","3","4","5","6","7","8","9","10","11","12")
+sst.monthly <- sst.monthly %>%
+  pivot_longer(cols = c("1","2","3","4","5","6","7","8","9","10","11","12"),
+               names_to = "Month", values_to = "SST") %>% 
+  mutate(Year = as.numeric(Year), Month = as.numeric(Month)) %>% 
+  filter(SST != 999.99) %>% 
+  mutate(YearMonth = Year + (Month-1)/12)
+# calculate mean from 1980 to 2010 and anomaly
+sst.mean <- sst.monthly %>% 
+  filter(Year >= 1980 & Year <= 2010) %>% 
+  group_by(Month) %>% 
+  summarise(SST.mean = mean(SST))
+sst.monthly <- sst.monthly %>% 
+  left_join(sst.mean, by = "Month") %>% 
+  mutate(SST.anomaly = SST - SST.mean) %>% 
+  mutate(sign = if_else(SST.anomaly >=0, "pos","neg"))
+
+ggplot(sst.monthly, aes(x = YearMonth, y = SST)) +
+  geom_line() +
+  geom_smooth(method = "lm") +
+  scale_x_continuous(breaks = seq(1880,2020,20)) +
+  xlab("Year") + ylab("Sea Surface Temperature")
+
+
+# Sea surface salinity
+sss.monthly <- read.csv(here(paste0(fol,f.sal)), header = TRUE, skip = 1 )
+colnames(sss.monthly) <- c("Year","1","2","3","4","5","6","7","8","9","10","11","12")
+sss.monthly <- sss.monthly %>%
+  pivot_longer(cols = c("1","2","3","4","5","6","7","8","9","10","11","12"),
+               names_to = "Month", values_to = "SSS") %>% 
+  mutate(Year = as.numeric(Year), Month = as.numeric(Month)) %>% 
+  filter(SSS != 999.99) %>% 
+  mutate(YearMonth = Year + (Month-1)/12)
+# calculate mean from 1980 to 2010 and anomaly
+sss.mean <- sss.monthly %>% 
+  filter(Year >= 1980 & Year <= 2010) %>% 
+  group_by(Month) %>% 
+  summarise(SSS.mean = mean(SSS))
+sss.monthly <- sss.monthly %>% 
+  left_join(sss.mean, by = "Month") %>% 
+  mutate(SSS.anomaly = SSS - SSS.mean) %>% 
+  mutate(sign = if_else(SSS.anomaly >=0, "pos","neg"))
+
+ggplot(sss.monthly, aes(x = YearMonth, y = SSS)) +
+  geom_line() +
+  geom_smooth(method = "lm") +
+  scale_x_continuous(breaks = seq(1880,2020,20)) +
+  xlab("Year") + ylab("Sea Surface Salinity")
+
+# TODO: Calculate the anomaly of annual means
+```

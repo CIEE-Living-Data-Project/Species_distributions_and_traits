@@ -8,7 +8,8 @@
 # geomean(x): Calculates the geometric mean of an array.
 # scaleFun(x): Returns a number with two decimal places.
 # standard_temp(rate0, t0, t, Q10): Calculate the value of a rate to a reference
-#   temperature using a Q10 coefficient.
+#   temperature using a Q10 coefficient. Default Q10 is 2.8 but be mindful of
+#   the appropriate Q10 value specific to the data.
 # cleanStrings(A): Cleans spaces, NAs, and blanks from strings for notes and 
 #   references. Also removes duplicated strings separated by ;.
 # cleanStringsList(A): Apply cleanStrings() to a list.

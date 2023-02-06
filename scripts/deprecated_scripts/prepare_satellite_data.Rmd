@@ -1,0 +1,297 @@
+---
+title: "Oceanography and satellite data for SOG"
+author: "Patrick Pata"
+date: '2023-01-10'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load libraries and files
+```{r}
+library(here)
+source(here("functions/R_package_check.R"))
+prepareLibrary()
+source(here("functions/QOL_toolkit.R"))
+
+# Load net metadata 
+load( here("data/net_metadata.RData") )
+
+theme_set(theme_bw())
+set_here(path = "..")
+
+# PolySet data frames for mapping the Strait of Georgia from the PBSmapping package
+data(nepacLL)
+data(nepacLLhigh) #higher resolution maps
+colnames(nepacLLhigh) <- c("group", "POS", "lon", "lat") # rename columns
+colnames(nepacLL) <- c("group", "POS", "lon", "lat")
+
+SOGmap <- ggplot() + 
+  geom_polygon(data=nepacLLhigh, aes(lon, lat, group=group), 
+               fill="grey85", size=0.2, color="black") +
+  coord_map(projection='mercator', 
+            xlim = c(-125.5, -122.5), ylim = c(48.5, 50.1)) + 
+  theme(axis.title = element_blank(), axis.text = element_blank()) +
+  theme_classic() 
+
+```
+
+# Subset Strait of Georgia satellite data
+## subset data from matlab
+```{r, eval = FALSE}
+# # the SoG satellite data associated with net data
+# load(here("data/SOG_satellite_acri_chl_2023_01_10.RData"))
+# netsat <- satellite.chl.grid %>% 
+#   distinct(lon, lat) %>% 
+#   mutate(lonlat = paste0(lon,"_",lat))
+
+# the complete satellite dataset generated from matlab
+library(R.matlab)
+fol <- "C:/Sync/UBC_codes/UBC-Zooplankton-Matlab-Codes/"
+f <- "acri_chla_bc_long_table_19972022.mat"
+
+data <- readMat(paste0(fol,f))
+chl <- as.data.frame(data$acri.chl.sub)
+colnames(chl) <- c("year","month","lon","lat","chl")
+
+chl <- chl %>% 
+  filter(lon >= -125.5 & lon <= -122.5 & lat >= 48.5 & lat <= 51) 
+
+chl.grid <- chl %>% 
+  distinct(lon, lat) %>% 
+  mutate(keep = FALSE)
+
+# find grid cells which are 0.12 degrees (3 grid cells) away from any of the net data points 
+sog.net <- zoop.SOG.meta %>% 
+  distinct(Longitude, Latitude) %>% 
+  rename(lon = Longitude, lat = Latitude)
+for (i in c(1:nrow(sog.net))) {
+  ii <- which(chl.grid$lon-0.12 <= sog.net[i,]$lon &
+              chl.grid$lon+0.12 >= sog.net[i,]$lon & 
+              chl.grid$lat-0.12 <= sog.net[i,]$lat &
+              chl.grid$lat+0.12 >= sog.net[i,]$lat)
+  if(!is_empty(ii)) {
+    chl.grid[ii,]$keep <- TRUE
+  }
+}
+
+chl.grid <- chl.grid %>% 
+  filter(keep == TRUE)
+
+SOGmap +
+  geom_point(data = chl.grid, aes(x = lon, y = lat))
+
+satellite.sog <- chl.grid %>% 
+  filter(keep == TRUE) %>% 
+  select(-keep) %>% 
+  left_join(chl, by = c("lon","lat")) %>% 
+  arrange(month) %>% 
+  arrange(year)
+
+# Export the subset to RData file
+save(satellite.sog, file = here("data/SOG_satellite_chl_19972022.RData"))
+```
+
+# -------------- old codes -----------------------
+```{r}
+# Subset grid cells by matching grid cells with net data
+chl.sog <- chl %>% 
+  mutate(lon2 = as.numeric(format(round(lon, 2), nsmall = 2)),
+         lat2 = as.numeric(format(round(lat, 3), nsmall = 3)))
+  mutate(lonlat = paste0(lon2,"_",lat2)) %>%
+  filter(lonlat %in% netsat$lonlat)
+
+# # Subset grid cells by matching lon and lat points in net data
+# chl.sog <- chl %>% 
+#   mutate(lon2 = as.numeric(format(round(lon, 2), nsmall = 2)),
+#          lat2 = as.numeric(format(round(lat, 3), nsmall = 3))) %>%
+#   filter(lon2 %in% netsat$lon,
+#          lat2 %in% netsat$lat)
+
+AA <- chl.sog %>% 
+  distinct(lon,lat, .keep_all = TRUE) 
+# with missing grid cells
+BB <- AA
+
+
+g <- SOGmap +
+  geom_point(data = distinct(AA, lon2, lat2), 
+             aes(x = lon2, y = lat2))
+g
+
+# library(plotly)
+# ggplotly(g)
+
+# save(satellite.chlorophyll,
+#      file = here("data/SOG_satellite_chl_19972022.RData"))
+
+# rm(netsat)
+```
+
+
+```{r}
+group_by(year, month) %>% 
+  summarise(chl.mean = mean(chl, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  mutate(YearMonth = year + (month-1)/12) %>% 
+  # calculate anomaly
+  group_by(month) %>% 
+  mutate(month.mean = mean(chl.mean),
+         chl.anom = chl.mean - month.mean) %>% 
+  ungroup()
+
+g1 <- ggplot(chl.sog, aes(x = YearMonth, y = chl.mean)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(trans = "log") +
+  ggtitle("Offshore GOA - Station P") + xlab("")
+
+g2 <- ggplot(chl.sog, aes(x = YearMonth, y = chl.anom, fill = sign)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = seq(1880,2020,5)) +
+  scale_color_manual(values = c("firebrick","cyan4")) +
+  xlab("Year") +
+  theme(legend.position = "none") 
+  # ggtitle("Offshore GOA - Station P")
+g1
+g2
+
+
+# Save to csv file
+chl.stnP.csv <- chl.stnP %>% 
+  select(YearMonth, Chlorophyll = chl.mean)
+write.csv(chl.stnP.csv, file = "output/chlorophyll_station_p.csv",
+          row.names = FALSE)
+
+png("figures/chlorophyll_station_p.png", width = 6, height = 3, 
+    units = "in",res = 300)
+ggplot(chl.stnP.csv, aes(x = YearMonth, y = Chlorophyll)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = "lm") +
+  scale_x_continuous(breaks = seq(1880,2020,20)) +
+  ylab("Chlorophyll-a Station P") + xlab("Year") 
+dev.off()
+
+```
+
+
+
+
+
+# Satellite data
+```{r}
+load(here("data/SOG_satellite_chl_19972022.RData"))
+
+# View which grid cells have net data
+sat.grid <- satellite.chlorophyll %>% 
+  distinct(lon, lat)
+SOGmap +
+  geom_point(data = distinct(sat.grid, lon, lat), 
+             aes(x = lon, y = lat))
+```
+
+
+# Calculating the average chlorophyll time series from gridded satellite data
+Chlorophyll a and other ocean color variables could be collected from satellites. Here, we provide gridded satellite-derived chlorophyll values for the Strait of Georgia.
+```{r}
+colnames(satellite.chl.grid)
+
+SOGmap +
+  geom_point(data = distinct(satellite.chl.grid, lon, lat), 
+             aes(x = lon, y = lat))
+
+chl.timeseries <- satellite.chl.grid %>% 
+  # The coverage of grid cells with chlorophyll data varies every month due to cloud cover. For calculating the SOG chlorophyll average, only include grid cells which are often sampled throughout the time series, set to an arbitrary threshold of N data points = 100.
+  group_by(lon, lat) %>% 
+  mutate(Ndata = sum(!is.na(chl))) %>% 
+  ungroup() %>% 
+  filter(Ndata >= 100) %>% 
+  # Calculating the average chlorophyll for SOG. Also divide into northern and central SOG roughly at 49.5 degrees latitude.
+  # overall average
+  group_by(year, month) %>% 
+  mutate(chla.sog = mean(chl, na.rm = T),
+         chla.sog.sd = sd(chl, na.rm = T)) %>% 
+  # regional average
+  mutate(region = if_else(lat >= 49.5, "northern", "central")) %>% 
+  group_by(year, month, region) %>% 
+  mutate(chla.sog.region = mean(chl, na.rm = T),
+         chla.sog.region.sd = sd(chl, na.rm = T)) %>% 
+  ungroup() %>% 
+  # summarise
+  select(-c(lon,lat,chl,Ndata)) %>% 
+  distinct() %>% 
+  # create year.month variable for timeseries
+  mutate(year.month = year + (month-1)/12)
+
+# Plot the timeseries
+# overall
+ggplot(data = distinct(chl.timeseries, year.month, .keep_all = T ),
+       aes(x = year.month, y = chla.sog)) +
+  geom_point() +
+  geom_line() 
+  # scale_y_continuous(trans='log10') 
+
+# per region
+ggplot(data = chl.timeseries,
+       aes(x = year.month, y = chla.sog.region,
+           color = region)) +
+  geom_point() 
+  
+
+```
+
+# Anomally time series
+For time series data, it is often interesting to look into the anomaly of a parameter relative to a climatological mean. Here we calculate the monthly climatology of chla in the SOG and then, calculate the anomaly time series.
+```{r}
+# Calculate the monthly climatology of the entire SOG
+chl.timeseries <- chl.timeseries %>% 
+  group_by(month) %>% 
+  mutate(chla.sog.clim = mean(chla.sog, na.rm = T)) %>% 
+  ungroup() %>% 
+  # Calculate the anomaly time series
+  mutate(chla.sog.anom = chla.sog - chla.sog.clim)
+
+# Plot anomaly as bar plots relative to zero
+ggplot(data = distinct(chl.timeseries, year.month, .keep_all = T ),
+       aes(x = year.month, y = chla.sog.anom)) +
+  geom_bar(stat = "identity")
+```
+
+Open data points of dataset
+```{r}
+load( here("data/SOG_satellite_acri_chl_2023_01_10.RData"))
+satellite.chl.grid
+
+chl.sog <- chl %>% 
+  filter(lon >= -125.5 & lon <= -122.5 & lat >= 48.5 & lat <= 51) 
+
+# grids with net data
+A <- satellite.chl.grid %>% 
+  distinct(lon, lat) %>% 
+  mutate(lonlat = paste0(lon,"_",lat)) %>% 
+  mutate(orig = T)
+
+chl.sog.2 <- chl.sog %>% 
+  mutate(lon2 = as.numeric(format(round(lon, 2), nsmall = 2)),
+         lat2 = as.numeric(format(round(lat, 3), nsmall = 3))) %>%
+  mutate(lonlat = paste0(lon2,"_",lat2)) %>% 
+  filter(lonlat %in% A$lonlat)
+
+
+SOGmap +
+  geom_point(data = distinct(chl.sog.2, lon, lat), 
+             aes(x = lon, y = lat))
+```
+
+
+
+
+
+
+
+
