@@ -1,1 +1,0 @@
-We'll use this folder to store tutorials that we'll run during the working group to teach some of the skills necessary to clean and analyze the data, e.g. github, running specific model types, etc. Later, we should update this README with info on what teaching materials (and their filenames/types) are included.
