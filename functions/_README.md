@@ -1,0 +1,9 @@
+This directory houses functions that are called in the scripts (found in the scripts/ folder, see readme). These functions do the following:
+
+**getClimateIndices.R** does...
+
+**QOL_toolkit.R** does...
+
+**R_package_check.R** checks for required packages, and installs any that are missing.
+
+**zoop_traits_toolkit.R** does...
