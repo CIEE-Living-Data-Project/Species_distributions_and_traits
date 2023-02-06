@@ -1,0 +1,25 @@
+---
+title: "Suggested Readings"
+author: "Prepared by Sam Straus"
+date: "06/02/2023"
+output: html_document
+---
+
+## Assigned readings
+
+1.  Green, S. J., Brookson, C. B., Hardy, N. A., & Crowder, L. B. (2022). Trait-based approaches to global change ecology: moving from description to prediction. Proceedings of the Royal Society B, 289(1971), 20220071. [link to paper](https://doi.org/10.1098/rspb.2022.0071)
+
+2. Hébert, M. P., & Beisner, B. E. (2020). Functional trait approaches for the study of metazooplankton ecology. Zooplankton Ecology, 3-27.  
+
+3.  Perry, R. I., Young, K., Galbraith, M., Chandler, P., Velez-Espino, A., & Baillie, S. (2021). Zooplankton variability in the Strait of Georgia, Canada, and relationships with the marine survivals of Chinook and Coho salmon. Plos one, 16(1), e0245941. [link to paper](https://doi.org/10.1371/journal.pone.0245941)
+
+## Related Literature
+
+1. Hébert, M. P., Beisner, B. E., & Maranger, R. (2017). Linking zooplankton communities to ecosystem functioning: toward an effect-trait framework. Journal of Plankton Research, 39(1), 3-12. [link to paper](https://doi.org/10.1093/plankt/fbw068)
+
+2. Johannessen, S. C., & Macdonald, R. W. (2009). Effects of local and global change on an inland sea: the Strait of Georgia, British Columbia, Canada. Climate Research, 40(1), 1-21. [link to paper](https://doi.org/10.3354/cr00819)
+
+3. Riche, O., Johannessen, S. C., & Macdonald, R. W. (2014). Why timing matters in a coastal sea: Trends, variability and tipping points in the Strait of Georgia, Canada. Journal of Marine Systems, 131, 36-53. [link to paper](https://doi.org/10.1016/j.jmarsys.2013.11.003)
+
+4. Schweigert, J. F., Thompson, M., Fort, C., Hay, D. E., Therriault, T. W., & Brown, L. N. (2013). Factors linking Pacific herring (Clupea pallasi) productivity and the spring plankton bloom in the Strait of Georgia, British Columbia, Canada. Progress in Oceanography, 115, 103-110. [link to paper](https://doi.org/10.1016/j.pocean.2013.05.017)
+
