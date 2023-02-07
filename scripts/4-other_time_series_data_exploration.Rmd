@@ -70,15 +70,19 @@ fraser.monthly <- read.csv(here(paste0(fol, f.monthly)), header = TRUE, skip = 1
          Year = as.numeric(Year),
          Parameter = if_else(PARAM == 1, "Discharge", "Water.Level")) %>% 
   mutate(YearMonth = Year + (Month-1)/12)
+```
 
-# Visualize the seasonal discharge pattern by plotting each year separately.
+Visualize the seasonal discharge pattern by plotting each year separately:
+```{r, eval=FALSE}
 ggplot(filter(fraser.daily, Parameter == "Discharge"),
        aes(x = DOY, y = Value, group = Year, color = Year)) +
   geom_line() +
   scale_color_continuous(type = "viridis") +
   theme(legend.position = "none")
+```
 
-# Identify the highest discharge day of the year.
+Identify the highest discharge day of the year.
+```{r, eval=FALSE}
 fraser.freshet <- fraser.daily %>% 
   filter(Parameter == "Discharge") %>% 
   group_by(Year) %>% 
@@ -89,8 +93,10 @@ fraser.freshet <- fraser.daily %>%
 ggplot(fraser.freshet, aes(x = Year, y = DOY)) +
   geom_point() +
   ggtitle("First day of highest discharge")
+```
 
-# Calculate the annual average discharge from the monthly data.
+Calculate the annual average discharge from the monthly data.
+```{r, eval=FALSE}
 fraser.annual <- fraser.monthly %>% 
   filter(Parameter == "Discharge") %>% 
   group_by(Year) %>% 
@@ -115,7 +121,10 @@ The lighthouse data stores the time series as separate folder per site. Here, we
 fol <- "data/bc_light_house/DATA_-_Active_Sites/Chrome_Island/"
 f.temp <- "Chrome_Island_-_Average_Monthly_Sea_Surface_Temperatures_1961-2022.csv"
 f.sal <- "Chrome_Island_-_Average_Monthly_Sea_Surface_Salinities_1961-2022.csv"
+```
 
+Plot sea surface temperature
+```{r}
 # Sea surface temperature
 sst.monthly <- read.csv(here(paste0(fol,f.temp)), header = TRUE, skip = 1 )
 colnames(sst.monthly) <- c("Year","1","2","3","4","5","6","7","8","9","10","11","12")
@@ -125,6 +134,7 @@ sst.monthly <- sst.monthly %>%
   mutate(Year = as.numeric(Year), Month = as.numeric(Month)) %>% 
   filter(SST != 999.99) %>% 
   mutate(YearMonth = Year + (Month-1)/12)
+
 # calculate mean from 1980 to 2010 and anomaly
 sst.mean <- sst.monthly %>% 
   filter(Year >= 1980 & Year <= 2010) %>% 
@@ -140,8 +150,10 @@ ggplot(sst.monthly, aes(x = YearMonth, y = SST)) +
   geom_smooth(method = "lm") +
   scale_x_continuous(breaks = seq(1880,2020,20)) +
   xlab("Year") + ylab("Sea Surface Temperature")
+```
 
-
+Plot sea surface salinity
+```{r}
 # Sea surface salinity
 sss.monthly <- read.csv(here(paste0(fol,f.sal)), header = TRUE, skip = 1 )
 colnames(sss.monthly) <- c("Year","1","2","3","4","5","6","7","8","9","10","11","12")
@@ -151,6 +163,7 @@ sss.monthly <- sss.monthly %>%
   mutate(Year = as.numeric(Year), Month = as.numeric(Month)) %>% 
   filter(SSS != 999.99) %>% 
   mutate(YearMonth = Year + (Month-1)/12)
+
 # calculate mean from 1980 to 2010 and anomaly
 sss.mean <- sss.monthly %>% 
   filter(Year >= 1980 & Year <= 2010) %>% 
