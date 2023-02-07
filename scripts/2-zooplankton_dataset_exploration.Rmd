@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Load libraries and files
+
 ```{r}
 library(here)
 source(here("functions/R_package_check.R"))
@@ -32,11 +33,13 @@ colnames(nepacLL) <- c("group", "POS", "lon", "lat")
 ```
 
 # Load and wrangle the zooplankton net data.
-Data source for zooplankton abundance and biomass data: https://open.canada.ca/data/en/dataset/2822c11d-6b6c-437e-ad65-85f584522adc
 
-Data dictionary: https://pacgis01.dfo-mpo.gc.ca/FGPPublic/Zooplankton_Data_SoG/Data_dictionary_EN_FR_SoG_zooplankton_data_1996-2018.htm
+Data source for zooplankton abundance and biomass data: <https://open.canada.ca/data/en/dataset/2822c11d-6b6c-437e-ad65-85f584522adc> Data dictionary: <https://pacgis01.dfo-mpo.gc.ca/FGPPublic/Zooplankton_Data_SoG/Data_dictionary_EN_FR_SoG_zooplankton_data_1996-2018.htm>
+
+Load the zooplankton abundance dataset from net observations
+
 ```{r}
-# The zooplankton abundance dataset from net observations
+
 # TODO: reorder factor levels for traitID and traitName
 zoop.SOG <- read.csv(here("data/Zoopl_SofG_1996-2018_EN.csv"),
                             check.names = F) %>% 
@@ -44,38 +47,61 @@ zoop.SOG <- read.csv(here("data/Zoopl_SofG_1996-2018_EN.csv"),
   rename("Longitude" = "Longitude(\xb0N)", "Latitude" = "Latitude(\xb0W)",
          "Mesh_size(um)" = "Mesh_size(\xb5m)",
          "Abundance(indiv/m3)" = "Abundance(m3)") %>% 
+  
   # Create new scientific name column.
   mutate(scientificName = paste(Genus,Species)) %>% 
   mutate(scientificName = cleanScientificName(scientificName)) %>% 
   relocate(scientificName) %>% 
+  
   # Calculate biomass as number of individuals per sample * average biomass per individual
   mutate(`Biomass(mg/m3)` = `Abundance(indiv/m3)` * `Average_biomass_per_individual(mg)`) %>% 
+  
   # Assign seasons: The spring bloom occurs around March in the Strait of Georgia and so "spring" is set to be March-April-May
   mutate(Season = "Winter") %>% 
   mutate(Season = if_else(Month >= 3 & Month <=5, "Spring", Season),
          Season = if_else(Month >= 6 & Month <=8, "Summer", Season),
          Season = if_else(Month >= 9 & Month <=11, "Fall", Season)) %>% 
+  
   # Assign date-time using lubridate
   mutate(datetime = lubridate::make_datetime(Year, Month, Day)) %>% 
   mutate(dayofyear = lubridate::yday(datetime)) %>% 
+  
   # Need to include time of day as well     
                                              # as.numeric(unlist(strsplit(Time,split=":"))[1]),
                                              # as.numeric(unlist(strsplit(Time,split=":"))[2])))
   #  tz = "Canada/Pacific")) # setting the time zone now returns an error. Need to figure out why.
+  
   # Exclude microzooplankton
   filter(Phylum %notin% c("Pyrrophycophyta (Division)","Ciliophora",
                             "Alveolates","Unclassified","Protozoa")) %>% 
+  
   # Remove a zero at the 8th character to match with the old index names
   mutate(NetKey = paste0(str_sub(Index,1,7),str_sub(Index,9,)))
 
-  
-# Data contents
-# The taxonomic resolution of the dataset is at species-stage or size class. See the data dictionary for details. The plankton data was provided as abundance (number of individuals per volume of water) and using the provided value of the average biomass per individual (specific to a species and stage or size class), the biomass is calculated.
+head(zoop.SOG)
+```
+
+# Explore data contents
+
+The taxonomic resolution of the dataset is at species-stage or size class. See the data dictionary for details. The plankton data was provided as abundance (number of individuals per volume of water) and using the provided value of the average biomass per individual (specific to a species and stage or size class), the biomass is calculated.
+
+View data variables: (For details, see: <https://pacgis01.dfo-mpo.gc.ca/FGPPublic/Zooplankton_Data_SoG/Data_dictionary_EN_FR_SoG_zooplankton_data_1996-2018.htm>)
+
+```{r}
 colnames(zoop.SOG)
+```
 
-head(unique(zoop.SOG$Genus_species))
+View species present in the daataset:
 
-# Create a species-level summary of the zooplankton dataset. This removes life stage or size class information so better to curate which life stages to include in an analysis before calculating species averages.
+```{r}
+zoop.SOG$scientificName %>%
+  unique() %>%
+  tibble()
+```
+
+Create a species-level summary of the zooplankton dataset. This removes life stage or size class information so better to curate which life stages to include in an analysis before calculating species averages:
+
+```{r}
 zoop.SOG.sp <- zoop.SOG %>% 
   select(-c("Average_biomass_per_individual(mg)","Size_class_or_life_stage")) %>% 
   group_by(scientificName) %>% 
@@ -84,8 +110,11 @@ zoop.SOG.sp <- zoop.SOG %>%
   ungroup() %>% 
   distinct()
 
+zoop.SOG.sp
 # TODO: extract a column of life stages
 ```
+
+Create and save a metadata file for the zooplankton data:
 
 ```{r}
 zoop.SOG.meta <- zoop.SOG %>% 
@@ -98,31 +127,36 @@ zoop.SOG.meta <- zoop.SOG %>%
          NetKey) %>% 
   distinct()
 
+
 # Output zooplankton metadata file
 save(zoop.SOG.meta, file = here("data/net_metadata.RData"))
 
 # Number of samples
 length(unique(zoop.SOG.meta$NetKey))
-# There are available data from 1996 to 2018 but seasonal sampling frequencies vary per year.
+```
+
+There are available data from 1996 to 2018 but seasonal sampling frequencies vary per year:
+
+```{r}
 sample.summary <- zoop.SOG.meta %>% 
   group_by(Year, Season) %>% 
   count()
 kable(sample.summary)
 ```
 
-Which stations get sampled the most
+Which stations get sampled the most?
+
 ```{r}
 zoop.SOG.meta %>% 
   group_by(Station) %>% 
   count() %>% 
   arrange(-n)
-
-colnames(zoop.SOG.meta)
-
 ```
 
-
 # Visualize the distribution of samples in space and time
+
+Plot map of Strait of Georgia:
+
 ```{r}
 # This is the high resolution base map for the SoG. Please change data = "nepacLL" if a lower resolution without some small islands is preferred.
 SOGmap <- ggplot() + 
@@ -131,29 +165,31 @@ SOGmap <- ggplot() +
   coord_map(projection='mercator', 
             xlim = c(-126, -122), ylim = c(48, 51)) + 
   theme(axis.title = element_blank(), axis.text = element_blank()) +
-  theme_classic() 
+  theme_classic()
+SOGmap
+```
 
+Add sampled stations to the map:
+
+```{r}
 # Spatial distribution of samples. Note that there are multiple overlapping points and there are a few stations that are regularly sampled.
 SOGmap +
   geom_point(data = zoop.SOG.meta, aes(x = Longitude, y = Latitude,
                                        color = `Bottom_depth(m)`)) +
   ggtitle("Distribution of zooplankton net samples")
+```
 
-zoop.SOG.meta %>% 
-  group_by(Station) %>% 
-  count() %>% 
-  arrange(-n) %>% 
-  head(15)
+Plot the temporal distribution of samples:
 
-# Temporal distribution of samples
+```{r}
 ggplot(data = zoop.SOG.meta, aes(x = dayofyear, y = Year)) +
   geom_point(aes(color = Twilight)) +
   # Roughly mark seasons
   geom_vline(xintercept = c(32,120,212,304), linetype="dotted", color = "blue")
 ```
 
-
 # Sample-level exploration
+
 ```{r}
 # Calculate total abundance, biomass, and diversity metrics for each sample
 zoop.SOG.summary <- zoop.SOG.sp %>% 
@@ -162,9 +198,6 @@ zoop.SOG.summary <- zoop.SOG.sp %>%
             Diversity.Shannon = diversity(`Abundance(indiv/m3)`, index = "shannon"),
             Diversity.Simpson = diversity(`Abundance(indiv/m3)`, index = "simpson")) %>% 
   mutate(Evenness = Diversity.Shannon/log(Richness))
+
+zoop.SOG.summary
 ```
-
-
-
-
-
