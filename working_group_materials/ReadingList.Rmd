@@ -27,4 +27,4 @@ output: html_document
 
 6. Palacio, F.X., Callaghan, C.T., Cardoso, P., Hudgins, E.J., Jarzyna, M.A., Ottaviani, G., Riva, F., Graco‐Roza, C., Shirey, V. and Mammola, S., (2022). A protocol for reproducible functional diversity analyses. Ecography, 2022(11), p.e06287. [link to paper](https://doi.org/10.1111/ecog.06287)
 
-
+7. Pearsall I,* M Schmidt,* I Kemp, and B Riddell. 2021 Synthesis of findings of the Salish Sea Marine Survival Project, Version 1.0. www.marinesurvivalproject.com, www.psf.ca, and www.lltk.org. [link to paper](https://marinesurvivalproject.com/research-findings/)
