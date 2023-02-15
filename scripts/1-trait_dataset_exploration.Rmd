@@ -20,13 +20,13 @@ theme_set(theme_bw())
 set_here(path = "..")
 
 # Load trait dataset metadata tables
-directory.trait <- openxlsx::read.xlsx(here("tables/trait_directory_20230205.xlsx"))
-directory.lifestage <- openxlsx::read.xlsx(here("tables/lifestage_directory_20221113.xlsx"))
-taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20221122.xlsx"))
+directory.trait <- openxlsx::read.xlsx(here("tables/trait_directory_20230207.xlsx"))
+directory.lifestage <- openxlsx::read.xlsx(here("tables/lifestage_directory_20230207.xlsx"))
+taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20230207.xlsx"))
 dataset.format <- openxlsx::read.xlsx(here("tables/trait_dataset_standard_format_20230118.xlsx"))[-1,]
 
 # Load the trait dataset
-load(here("data/zooplankton_traits-2023-02-05.RData"))
+load(here("data/zooplankton_traits-2023-02-12.RData"))
 ```
 
 

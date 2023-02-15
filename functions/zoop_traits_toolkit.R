@@ -1,6 +1,6 @@
 # Trait dataset paper tool kit
 # Created by P. Pata
-# Last modified January 9, 2023
+# Last modified February 15, 2023
 #
 # ***** Trait dataset tool kit *****
 # 
@@ -9,6 +9,8 @@
 # descriptions are reported below. Many of the functions require a the trait
 # dataset, trait directory, and taxonomy table.
 # 
+#
+# ----- Function Descriptions -----
 #
 # ** Data wrangling and curation functions **
 #
@@ -32,10 +34,20 @@
 # annotateTaxonomy(data, taxonomy): Assigns the taxonomic ID and the taxonomic 
 #   ranks it belongs to. The recorded scientific name would be stored in the 
 #   column verbatimScientificName.
-#
+# widen_traits(trait.table, trait.list): Subsets the trait dataset to only 
+#    the traits specified in the list. Only retains taxon information.
+# getMaxObsNum(traitName, taxonID, df): Gets the maximum observation number for 
+#    a trait and species.
+# getSpeciesMeanSD(traitValue, traitValueSD, traitValueN): Calculate the 
+#   weighted means and SDs of traits when the dataset is a mix of individual
+#   values and averaged records.
 #
 # ** Data imputation functions **
 # 
+# get_pairwise.N(x,y): Calculates the number of pair of two variables with data.
+# correlate_traits(trait.table, trait.list): Calculates correlations between
+#    variables in trait.list and returns a long data frame of the correlation,
+#    N data pairs, and p-value.
 # getGroupLevelValue(taxon, trait, gen.level, trait.df, taxonomy.df)): Calculates
 #   the group-level mean, standard deviation, and number of species-level 
 #   observations for generalization of a given trait for a taxon. 
@@ -46,7 +58,7 @@
 #   two trait variables for a zooplankton group. 
 # calculateFromModel(df, model, excludeWithLit, applyToGeneralized, 
 #   excludeCalculated): Calculates a trait using a regression model.
-# plotAllometric(df, grp, X, Y): Plots the distribution of values between two 
+# plotAllometric(df, grp, X, Y, base): Plots the distribution of values between two 
 #   traits and a regression line. [!!! Should be sensitive to if OLS or RMA regressions.]
 # plotRegModel(model): Plots a simple regression model result with 95% confidence
 #   intervals. 
@@ -54,9 +66,11 @@
 #   the weight specific rate for traits with calculate rate values derived
 #   from regression equations.
 
-
 require(tidyverse)
 require(lmodel2)
+
+
+# ----- Data wrangling and curation functions -----
 
 # For converting individual rates to weight specific
 convertRateT2WS <- function(df, sizeAssoc, trtName1, trtName2, trtUnit) {
@@ -501,9 +515,73 @@ annotateTaxonomy <- function(data, taxonomy) {
     select(-vsn_ed)
 }
 
+# Widens a table for listed traits. Column names do not change and SD is excluded.
+widen_traits <- function(trait.table, trait.list) {
+  trait.table %>% 
+    filter(traitName %in% trait.list) %>% 
+    dplyr::select(taxonID, scientificName, majorgroup, aphiaID, 
+                  traitName, traitValue) %>% 
+    pivot_wider(names_from = traitName, values_from = traitValue) %>% 
+    relocate(all_of(trait.list)) 
+}
 
-# ********* Data imputation codes **************
-# This function calculates the mean, standard deviation, and number of observations for generalization of a given trait for a taxon. This will not generate an updated traitTaxonID and this should created if including the generalized trait observation in the overall trait table.
+getMaxObsNum <- function(traitName, taxonID, df) {
+  df <- df %>% 
+    filter(traitName == traitName & taxonID == taxonID)
+  if (nrow(df) > 0) {
+    i <- max(df$observationNumber)
+  } else {
+    i <- 0
+  }
+  i
+}
+
+
+# Calculate the weighted means and SDs of traits when the dataset is a mix of 
+#   individual values and averaged records.
+getSpeciesMeanSD <- function(traitValue, traitValueSD, traitValueN){
+  # extract indiv values and grouped values
+  val.indiv <- traitValue[which(traitValueN == 1)]
+  val.group.mean <- traitValue[which(traitValueN > 1)]
+  val.group.N <- traitValueN[which(traitValueN > 1)]
+  val.group.sd <- traitValueSD[which(traitValueN > 1)]
+  # calculate mean of the individual values
+  val.indiv.mean <- mean(val.indiv)
+  val.indiv.N <- length(val.indiv)
+  val.indiv.sd <- sd(val.indiv, na.rm = TRUE)
+  
+  # calculate N
+  N <- sum(traitValueN)
+  # calculate weighted mean
+  mean <- weighted.mean(c(val.indiv.mean, val.group.mean),
+                        c(val.indiv.N, val.group.N))
+  # calculate pooled sd
+  # catch if val.indiv.N = 1, calculate the pooled sd from the groups vars only, 
+  #  note that the mean and N are of all though. This is obviously not accurate 
+  #  but would be a better estimate compared to calculating the unweighted sd, 
+  #  especially when the group.N sums to a large sample.
+  if (val.indiv.N == 1) {
+    sd <- pooled.sd(c(val.group.sd),
+                    c(val.group.N))
+  } else {
+    sd <- pooled.sd(c(val.indiv.sd, val.group.sd),
+                    c(val.indiv.N, val.group.N))
+  }
+  # calculate standard error
+  se <- sd / sqrt(N)
+  
+  
+  return(list("N" = N, "mean" = mean, "sd" = sd, "se" = se))
+}
+
+
+
+# ----- Data imputation functions -----
+
+# This function calculates the mean, standard deviation, and number of observations 
+#   for generalization of a given trait for a taxon. This will not generate an 
+#   updated traitTaxonID and this should created if including the generalized trait 
+#   observation in the overall trait table.
 getGroupLevelValue <- function(taxon, trait, gen.level = "genus", trait.df, taxonomy.df){
   # check if trait is continuous or binary
   trait.type <- trait.df %>% 
@@ -567,6 +645,46 @@ getGroupLevelValue <- function(taxon, trait, gen.level = "genus", trait.df, taxo
   return(generalized.trait)
 }
 
+
+get_pairwise.N <- function(vec_a, vec_b) {
+  sum(!is.na(vec_a) & !is.na(vec_b))
+}
+
+correlate_traits <- function(trait.table, trait.list,
+                             logtransX = FALSE, logtransY = FALSE) {
+  A <- widen_traits(trait.table, trait.list) %>% 
+    # filter(!is.na(get(trait.list[1])) & !is.na(get(trait.list[2]))) %>% 
+    dplyr::select(all_of(trait.list)) 
+  
+  # If log10 transform the X or Y variable
+  if (logtransX == TRUE) {
+    A[,1] = log10(A[,1])
+  }
+  if (logtransY == TRUE) {
+    A[,2] = log10(A[,2])
+  }
+  
+  # with the corrr::correlate() function, multiple traits can be analyzed with missing points. This returns a correlation matrix which can be stretched into a long data frame.
+  # Correlate, get p-value, and N
+  B <- corrr::correlate(A, use = "pairwise.complete.obs", 
+                        method = "pearson", quiet = TRUE) %>% 
+    corrr::stretch(na.rm = TRUE, remove.dups = TRUE) 
+  
+  C <- corrr::colpair_map(A, get_pairwise.N) %>% 
+    corrr::stretch(na.rm = TRUE, remove.dups = TRUE) %>% 
+    rename(N = r)
+  
+  D <- corrr::colpair_map(A, calc_p_value) %>%  
+    corrr::stretch(na.rm = TRUE, remove.dups = TRUE) %>% 
+    rename(pval = r)
+  
+  E <- left_join(B,C, by = c("x","y")) %>% 
+    left_join(D, by = c("x","y")) %>% 
+    arrange(-r)
+  
+  return(E)
+}
+
 # general equation for allometric conversion, base defaults to natural log
 conv.allom <- function(W,a,b,base = exp(1)) {
   base^(a + (b*log(W,base)))
@@ -626,26 +744,33 @@ getRegressionModel <- function(df, grp = "All", X, Y,
                                  n = nrow(trait.sub), 
                                  R2 = reg$rsquare,
                                  pval = reg$P.param, 
-                                 model = model,
+                                 model = model, base = as.character(base),
                                  minX = min(trait.sub[,1]), maxX = max(trait.sub[,1]))
 }
 
 # calculate values based on an allometric conversion model
-calculateFromModel <- function(df, model, excludeWithLit = TRUE,
+calculateFromModel <- function(df, model, trait.directory, excludeWithLit = TRUE,
                                applyToGeneralized = FALSE,
                                excludeCalculated = TRUE) {
   # make sure this is just one model
   stopifnot(nrow(model) == 1)
   
+  # error if the base of the logarithm is not 10 or e (natural log).
+  if (!(model$base == "10" | model$base == "e" | model$base == "ln")) {
+    stop("Error: Please select model with either base 10 or e.")
+  }
+  
   df.withdata <- df %>% 
     filter(str_detect(traitValueSource, "literature|derived")) %>% 
-    filter(traitName %in% model$Y) 
+    filter(traitName %in% model$Y)
   
   df.calc <- df %>% 
-    select(-c(primaryReference, secondaryReference, 
-              primaryReferenceDOI, secondaryReferenceDOI,
-              traitTaxonID, traitValueSD, traitValueN,
-              sizeType, sizeAssocName, sizeAssocUnit, sizeAssocValue,
+    # Assign the verbatim trait information as the calculated values
+    mutate(verbatimTraitName = traitName, verbatimTraitUnit = traitUnit,
+           verbatimTraitValue = as.character(traitValue), verbatimNotes = notes) %>% 
+    select(-c(primaryReferenceDOI, secondaryReferenceDOI, traitTaxonID, 
+              sizeAssocName, sizeAssocUnit, sizeAssocValue,
+              sizeAssocN, sizeAssocSD, traitValueTemperature,
               sizeAssocReference, location, longitude, latitude, notes,
               isMerged, mergedTraitTaxonIDs, traitValueMeasurementNotes)) %>%  
     filter(str_detect(group, model$grp),
@@ -653,10 +778,28 @@ calculateFromModel <- function(df, model, excludeWithLit = TRUE,
     filter(traitValue >= model$minX,
            traitValue <= model$maxX)
   
+  # If the predictor is size trait, assign it as sizeAssoc
+  if (model$X %in% c("bodyLengthMax", "carbonWeight", "dryWeight", "wetWeight")){
+    df.calc <- df.calc %>%
+      mutate(sizeAssocName = traitName,
+             sizeAssocUnit = traitUnit, sizeAssocValue = traitValue,
+             sizeAssocSD = traitValueSD, sizeAssocN = traitValueN,
+             sizeAssocReference = if_else(!is.na(secondaryReference),
+                                          secondaryReference, primaryReference))
+  }
+  # If y variable is a rate, assign temperature to defaul of 15C, if this is
+  #   not the case, need to revise externally.
+  if (grepl("_15C",model$Y)){
+    df.calc <- df.calc %>% 
+      mutate(traitValueTemperature = 15)
+  }
+  
   if(excludeCalculated == TRUE) {
     df.calc <- df.calc %>% 
       filter(!(traitValueSource == "calculated"))
   }
+  df.calc <- df.calc %>% 
+    dplyr::select(-c(primaryReference, secondaryReference, traitValueSD, traitValueN))
   
   if(applyToGeneralized == TRUE) {
     df.calc <- df.calc %>% 
@@ -667,15 +810,24 @@ calculateFromModel <- function(df, model, excludeWithLit = TRUE,
       filter(!(traitValueSource == "generalized"))
   }
   
-  # convert traits
-  df.calc <- df.calc %>% 
+  # calculate for traits - note that traits here are log-transformed to a 
+  #  specific base. None of the models involve percent or ratio traits, and 
+  #  those would need a separate transformation if ever.
+  if (model$base == "10") {
+    df.calc <- df.calc %>% 
+      mutate(traitName = model$Y,
+             traitValue =  conv.allom(traitValue, model$a, model$b, base = 10))
+  } else if (model$base == "e" | model$base == "ln") {
     mutate(traitName = model$Y,
-           traitValue = conv.allom(traitValue, model$a, model$b),
-           traitValueSource = "calculated",
+           traitValue =  conv.allom(traitValue, model$a, model$b))
+  }
+  
+  df.calc <- df.calc %>% 
+    mutate(traitValueSource = "calculated",
            notes = paste0("Value calculated from ",model$X, " using the equation: ",
-                          "y = e^(",sprintf("%.3f",model$a),
+                          "y = ",model$base,"^(",sprintf("%.3f",model$a),
                           "+(",sprintf("%.3f",model$b),
-                          "*log(x,e)))."),
+                          "*log(x,",model$base,")))."),
            uploadBy = "P.Pata", 
            uploadDate = as.character(ymd(Sys.Date()))) %>% 
     
@@ -697,16 +849,15 @@ calculateFromModel <- function(df, model, excludeWithLit = TRUE,
   df.calc <- df.calc %>% 
     # update units and traitTaxonIDs
     standardizeID(trait.directory) %>% 
+    standardizeUnit(trait.directory) %>% 
     group_by(traitID,taxonID) %>% 
     mutate(observationNumber = maxObsNum + row_number()) %>% 
     mutate(maxObsNum = max(observationNumber)) %>% 
     mutate(traitTaxonID = paste0(traitID,"-",taxonID,"-",observationNumber)) %>% 
     ungroup()
-  # updateIDs()
 }
 
-# function for plot
-plotAllometric <- function(df, grp, X, Y) {
+plotAllometric <- function(df, grp, X, Y, base = "10") {
   trait.sub <- df %>% 
     filter(traitName %in% c(X,Y)) %>% 
     filter(str_detect(group, grp)) %>% 
@@ -715,11 +866,19 @@ plotAllometric <- function(df, grp, X, Y) {
     pivot_wider(names_from = traitName, values_from = traitValue) %>% 
     filter(!is.na(get(X)) & !is.na(get(Y))) 
   
+  if (base == "10") {
+    base.trans <-  "log10"
+  } else if(base == "e") {
+    base.trans <-  "log"
+  } else {
+    stop("Error: Please select the axis scales to either be log10 or ln scaled.")
+  }
+  
   ggplot(trait.sub, aes(x = get(X), y = get(Y))) +
     geom_point(aes(color = majorgroup, text = scientificName)) +
     geom_smooth(method = "lm", se = TRUE) +
-    scale_x_continuous(labels = scaleFUN, trans = "log10") +
-    scale_y_continuous(labels = scaleFUN, trans = "log10") +
+    scale_x_continuous(labels = scaleFUN, trans = base.trans) +
+    scale_y_continuous(labels = scaleFUN, trans = base.trans) +
     xlab(X) + ylab(Y) +
     theme_bw() + 
     stat_regline_equation(label.y = 1) +
@@ -727,64 +886,68 @@ plotAllometric <- function(df, grp, X, Y) {
              label.y = 1.5) 
 }
 
-# Plot regression line with confidence intervals
+# Plot regression line with confidence intervals - this only plots the function 
+#  but not the data points
 plotRegModel <- function(model){
   model <- model[1,]
   
-  df <- data.frame( x = seq(model$minX, model$maxX, len = 100) ) %>% 
-    mutate(y = conv.allom(x, model$a, model$b),
-           y.lower = conv.allom(x, model$a.ci.2.5, model$b.ci.2.5),
-           y.upper = conv.allom(x, model$a.ci.97.5, model$b.ci.97.5))
+  if (model$base == "10") {
+    base.trans <-  "log10"
+    base.allom <- 10
+  } else if(model$base == "e") {
+    base.trans <-  "log"
+    base.allom <- exp(1)
+  } else {
+    stop("Error: Please select the axis scales to either be log10 or ln scaled.")
+  }
   
-  ggplot(df, aes(x, y)) +
+  df <- data.frame( x = seq(model$minX, model$maxX, len = 100) ) %>% 
+    mutate(y = conv.allom(x, model$a, model$b, base = base.allom),
+           y.lower = conv.allom(x, model$a.ci.2.5, model$b.ci.2.5, base = base.allom),
+           y.upper = conv.allom(x, model$a.ci.97.5, model$b.ci.97.5, base = base.allom))
+  
+  g <- ggplot(df, aes(x, y)) +
     geom_line() + 
     geom_line(aes(y = y.lower), lty = 2, color = "gray") +
     geom_line(aes(y = y.upper), lty = 2, color = "gray") +
     theme_bw() +
     xlab(model$X) + ylab(model$Y) +
-    scale_x_continuous(labels = scaleFUN, trans = "log10") +
-    scale_y_continuous(labels = scaleFUN, trans = "log10")
+    scale_x_continuous(labels = scaleFUN, trans = base.trans) +
+    scale_y_continuous(labels = scaleFUN, trans = base.trans)
   
+  return(g)
 }
 
 
-calculate.WSRates <- function(trait.df, traits.calculated,
-                              trait.X, trait.Y) {
-  size.assoc <- trait.df %>% 
-    filter(traitName == trait.X) %>% 
-    filter(traitValueSource != "generalized") %>% 
-    mutate(sizeType = traitName,
-           sizeAssocValue = traitValue,
-           sizeAssocUnit = traitUnit, 
-           sizeAssocReference = "calculated species average") %>% 
-    select(taxonID, sizeType, sizeAssocValue, sizeAssocUnit, sizeAssocReference)
-  
+# Updated February 13, 2023 - uses the associated size value
+calculate.WSRates <- function(traits.calculated, trait.X, trait.Y) {
+  # Prepare for updates in traitName and traitUnit
   if (trait.X == "carbonWeight") {
     name.suffix <- "_WSC_15C"
-    unit.suffix <- "mg C^-1 h^-1"
+    unit.suffix <- "mg C^-1 h"
   } else if (trait.X == "dryWeight") {
     name.suffix <- "_WSDW_15C"
-    unit.suffix <- "mg^-1 h^-1"
+    unit.suffix <- "mg^-1 h"
   } else if (trait.X == "wetWeight") {
     name.suffix <- "_WSWW_15C"
-    unit.suffix <- "mg^-1 h^-1"
+    unit.suffix <- "mg^-1 h"
   } else {
     stop("Error: Please select either carbonWeight, dryWeight, or wetWeight.")
   }
   
-  
-  traits.calculated.ws <- traits.calculated %>% 
-    mutate(traitValue = as.numeric(traitValue)) %>% 
-    filter(traitValueSource == "calculated") %>% 
-    select(-c(sizeType, sizeAssocValue, sizeAssocUnit, sizeAssocReference)) %>% 
+  traits.calculated <- traits.calculated %>% 
     filter(traitName %in% trait.Y) %>% 
-    left_join(size.assoc, by = "taxonID") %>% 
+    # Assign the verbatim trait information as the calculated values
+    mutate(verbatimTraitName = traitName, verbatimTraitUnit = traitUnit,
+           verbatimTraitValue = traitValue, verbatimNotes = notes,
+           traitValue = as.numeric(traitValue),
+           sizeAssocValue = as.numeric(sizeAssocValue)) %>% 
+    group_by(traitTaxonID) %>% 
     filter(!is.na(traitValue) & !is.na(sizeAssocValue)) %>% 
     mutate(traitValue = traitValue / sizeAssocValue,
            traitName = str_replace(traitName,"_15C", name.suffix),
-           traitUnit = str_replace(traitUnit,"h^-1", unit.suffix),
-           traitValueSource = "calculated") %>% 
+           traitUnit = str_replace(traitUnit,"h", unit.suffix),
+           notes = "Calculated from per individual rate and associated size value.") %>% 
     standardizeID(trait.directory) %>% 
     mutate(traitValue = as.character(traitValue))
-  
 }
