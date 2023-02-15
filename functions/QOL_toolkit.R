@@ -1,9 +1,11 @@
 # Quality of life tool kit
 # Created by P. Pata
-# Last modified January 10, 2023
+# Last modified February 15, 2023
 #
 # This file contains some functions that are useful in day to day data analysis.
 # 
+#
+# ----- Function Descriptions -----
 #
 # geomean(x): Calculates the geometric mean of an array.
 # scaleFun(x): Returns a number with two decimal places.
@@ -15,8 +17,23 @@
 # cleanStringsList(A): Apply cleanStrings() to a list.
 # cleanScientificName(name): Cleans the verbatim scientific name from trailing 
 #   spaces and life stage information. Also removes the sp, aff, and cf texts.
+# getStdAnom(x): Calculates the standardized anomaly of a variable. The input
+#   x is any numeric array. Before calling this function, the data frame needs 
+#   to be grouped first (group_by). Returns the standardized anomaly. 
+# asinTransform(x): Calculates the arcsine transformation of a value for
+#   proportional or percent data. Returns the transformed data with range 
+#   of (-inf, inf).
+# logitTransform(x): Calculates the logit transformation of a value for
+#   proportional or percent data. Returns the transformed data with range 
+#   of [0, 1].
+# pooled.sd(SDarray, Narray): Calculates the pooled SD from two SDs.This is 
+#   similar to the weighted mean. Note that this will only work if both arrays 
+#   have N > 1.
+
 
 require(tidyverse)
+
+# ----- QOL Functions -----
 
 `%notin%` <- Negate(`%in%`)
 
@@ -63,4 +80,40 @@ cleanScientificName <- function(name){
   name <- str_replace(name, "solitary","")
   name <- str_squish(str_trim(name))
   name
+}
+
+getStdAnom <- function(x) {
+  x.clim <- mean(x, na.rm = TRUE)
+  x.clim.sd <- sd(x, na.rm = TRUE)
+  x.anom <- (x - x.clim) / x.clim.sd
+  return(x.anom)
+}
+
+# arcsine transformation 
+asinTransform <- function(x) { 
+  # if percent data, change to proportion
+  if (max(x) > 1 & min(x) >= 0 & max(x) <= 100) {
+    x <- x/100
+  } else if(min(x) < 0 | max(x) > 100){
+    stop("Error: Data must either be proportion [0,1] or percentage [0, 100]")
+  }
+  asin(sqrt(x)) 
+}
+
+# logit transformation 
+logitTransform <- function(x) { 
+  # if percent data, change to proportion
+  if (max(x) > 1 & min(x) >= 0 & max(x) <= 100) {
+    x <- x/100
+  } else if(min(x) <= 0 | max(x) <= 1){
+    stop("Error: Data must either be proportion [0,1] or percentage [0, 100]")
+  }
+  log(x/(1-x)) 
+}
+
+# pooled sd
+pooled.sd <- function(SDarray, Narray){
+  sqrt(sum((Narray-1)*(SDarray)^2) / (sum(Narray) - length(Narray)) )
+  # # if inputs are: x,y,Nx,Ny
+  # sqrt( ((Nx-1)*x^2 + (Ny-1)*y^2) / (Nx+Ny-2))
 }
