@@ -1,0 +1,249 @@
+(function($, window, wb){
+'use strict';
+
+/**
+ * Display check all button
+ */
+$('#check-all').addClass('inline');
+
+/**
+ * Functionality for error messages.
+ */
+var last = '';
+
+$('.alert .errors li').each(function(){
+  var
+  $this = $(this),
+  name = $this.attr('data-name'),
+  $element = $('[name="' + name + '"]');
+
+  if(last !== name){
+    $element.addClass('error');
+
+    if($element.prop('tagName') === 'INPUT' && ($element.attr('type') === 'text' || $element.attr('type') === 'password')){
+      $element.after('<span class="glyphicon glyphicon-remove"></span>');
+    }
+  }
+
+  last = name;
+});
+
+$('.alert .errors li').on('click', function(){
+  $('[name="' + $(this).attr('data-name') + '"]').focus();
+});
+
+/**
+ * functionality for search checkbox "check all"
+ */
+var
+$checkAll = $('#check-all'),
+$table = $checkAll.parents('table'),
+$tbody = $table.children('tbody'),
+$paginateButton = $('.paginate_button');
+
+$checkAll.on('click', function(e){
+	// $tbody.find('input[type="checkbox"]').prop('checked', ($checkAll.is(':checked')));
+  var checkboxes;
+
+  checkboxes = ($(this).is(':checked')) ? $tbody.find('input[type="checkbox"]:not(:checked)') : $tbody.find('input[type="checkbox"]:checked');
+  checkboxes.click(); // trigger the functionality to create hidden elements wtih click()
+});
+
+// decide whether "checkAll" should be checked when a page is switched
+$('.table-responsive').on('click', $paginateButton, function(e){
+  var
+  i = 0,
+  rows = $tbody.find('tr').length || 20;
+
+  $tbody.find('input[type="checkbox"]').each(function(){
+    if($(this).is(':checked')){
+      i++;
+    }
+  });
+
+  $checkAll.prop('checked', (i === rows));
+});
+
+/**
+ * functionality to add hidden form elements for any checkboxes that are checked
+ * allows save list/report pages to use stations that are on different pages in paginated table
+ */
+$('[name="check[]"], [name="station_number[]"], [name="id[]"]').on('click', function(){
+  var
+  $this = $(this);
+
+  if(!$this.is('#check-all')){
+    if($this.is(':checked')){
+      $this.parents('form').prepend('<input type="hidden" name="' + $this.attr('name') + '" value="' + $this.attr('value') + '">');
+    }else{
+      $('input[type="hidden"][value="' + $this.attr('value') + '"]').remove();
+    }
+  }
+});
+
+$('#result, .result').on('submit', function(){
+  $('[type="checkbox"][name="check[]"], [type="checkbox"][name="station_number[]"], [type="checkbox"][name="id[]"]').each(function(){
+    $('input[type="hidden"][value="' + $(this).attr('value') + '"]').remove();
+  });
+});
+
+/**
+ * Style data table form elements to look like wet4
+ */
+$(document).on('wb-ready.wb-tables', '.wb-tables', function(e){
+  $('.dataTables_length select').addClass('form-control input-sm pdng-sm');
+  $('.dataTables_filter input').addClass('form-control input-sm pdng-hor-sm-md pdng-ver-sm inline-block');
+  $('.dataTables_length, .dataTables_filter').addClass('mrgn-bttm-sm');
+  $('.dataTables_filter, .dataTables_length, .dataTables_info').addClass('hidden-print');
+  $('.dataTables_info').addClass('mrgn-tp-sm');
+});
+
+/**
+ * Remove search parameters from url when form is submitted if the default is selected
+ */
+$('main').on('submit', '#search-form', function(){
+  // 'element-to-check' : [ 'elements', 'to', 'remove' ]
+  var
+  elements = {
+    '#station-name-search' : [ '#station-name' ],
+    '#station-number-search' : [ '#station-number' ],
+    '#province-search' : [ '#province' ],
+    '#basin-search' : [ '#basin' ],
+    '#region-search' : [ '#region' ],
+    '#coordinate-search' : [
+      '#north-degrees',
+      '#north-minutes',
+      '#north-seconds',
+      '#south-degrees',
+      '#south-minutes',
+      '#south-seconds',
+      '#east-degrees',
+      '#east-minutes',
+      '#east-seconds',
+      '#west-degrees',
+      '#west-minutes',
+      '#west-seconds'
+    ],
+    '#parameter-type' : [ '#parameter-type' ],
+    '#minimum-years' : [ '#minimum-years' ],
+    '#regulation' : [ '#regulation' ],
+    '#station-status' : [ '#station-status' ],
+    '#operation-schedule' : [ '#operation-schedule' ],
+    '#contributing-agency' : [ '#contributing-agency' ],
+    '#gross-drainage-area' : [ '#gross-drainage-area', '#gross-drainage-operator' ],
+    '#effective-drainage-area' : [ '#effective-drainage-area', '#effective-drainage-operator' ],
+    '#sediment' : [ '#sediment' ],
+    '#real-time' : [ '#real-time' ],
+    '#rhbn' : [ '#rhbn' ],
+    '#contributed' : [ '#contributed' ]
+  };
+
+  $.each(elements, function(key, value){
+    var
+    $this = $(key);
+
+    if(($this.attr('type') === 'radio' && !$this.is(':checked')) || ($this.attr('type') === 'text' && $this.val() === '') || ($this.prop('tagName') === 'SELECT' && ($this.val() === 'all' || $this.val() === '---'))){
+      $.each(value, function(k, v){
+        $(v).removeAttr('name');
+      });
+    }
+  });
+});
+
+/**
+ * Output message when number of records per page for the table is changed.
+ */
+/*
+var
+toastCount = 0;
+
+$('#result').on('change', 'select[name="wb-tables-id-0_length"]', function(){
+  if(toastCount === 0){
+    $('#wb-tables-id-0_length').after('<span class="table-updated arrow-bottom">Table Updated</span>');
+
+    $('.table-updated').fadeOut(2500, function(){
+      $('.table-updated').remove();
+    });
+
+    toastCount++;
+  }
+});
+*/
+
+/**
+ * When clicking on an internal link where the target is within a tab, open the tab that the target element element is within.
+ * If the target is a details element, click the details element to show the content.
+ */
+$(document).on('click', 'a[href^="#"]', function(e){
+  var
+  $this = $(this),
+  target = {
+    element : $($this.attr('href')),
+    get summary(){
+      return this.element.children('summary');
+    },
+    get tab(){
+      return this.element.parents('details.tab-container-grp[role="tabpanel"]');
+    },
+    get isDetails(){
+      return (this.element.is('details'));
+    },
+    get inTab(){
+      return (this.element.parents('.tabpanels').length) ? true : false;
+    },
+  };
+
+  if(target.inTab === true){
+    target.tab.click();
+
+    if(target.isDetails === true && !target.element.is('[open]')){
+      target.summary.click();
+    }
+
+    $('html, body').animate({ scrollTop : target.element.offset().top }, 'fast');
+
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+
+/**
+ * Active links for pagination should not go to a page.
+ */
+$('.pagination .active a').on('click', function(e){
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+var checked = 0;
+$('#watch_results_table input[type="checkbox"]').on('change', function(e) {
+		if ($(this).is(':checked') && $(this).attr('id') !== 'check-all') {
+			checked++;
+		}
+		if (!$(this).is(':checked') && $(this).attr('id') !== 'check-all') {
+			checked--;
+		}
+});
+
+$('input[type="submit"][name="add"').on('click', function(e) {
+	if (checked + $('#watch_list_table tbody tr').length > 50) {
+		$('h1#wb-cont + div.alert').remove();
+		$('h1#wb-cont').after(`<div class="alert alert-danger"><h2>${t('Your request could not be completed because 1 error was found')}</h2><p>${t('You\'ve selected more than 50 stations. Please deselect some of them.')}</p></div>`);
+		window.scroll(0, 0);
+		e.preventDefault();
+		e.stopPropagation();
+	}
+});
+
+if($('#update-bookmark').length === 1){
+  $(document).on('wb-ready.wb-lbx', '.wb-lbx', function(event){
+    $('a[href="#update-bookmark"]').click();
+  });
+
+  $(document).on('click', '#update-bookmark button', function(){
+    $('a[href="#update-bookmark"]').remove();
+    window.location.href = window.location.href.split('?')[0];
+  });
+}
+
+})(jQuery, window, wb);
