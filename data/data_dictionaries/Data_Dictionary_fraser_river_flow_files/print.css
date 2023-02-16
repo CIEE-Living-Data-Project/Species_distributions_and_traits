@@ -1,0 +1,474 @@
+@media print{
+  .col-lg-8{
+    float: left;
+    width: 65%;
+  }
+
+  .col-lg-4{
+    float: left;
+    width: 35%;
+  }
+
+  .col-lg-6{
+    float: left;
+    width: 50%;
+  }
+
+  a[href]:after{
+    content: none !important;
+  }
+
+  table{
+    border: 1px solid #DDD !important;
+  }
+
+  body > *{
+    font-size: 0.75em !important;
+  }
+
+  .container{
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+  }
+
+  abbr[title]:after{
+    content: "";
+  }
+
+  summary[id^="wb-auto-"]{
+    margin-bottom: 5px !important;
+    padding: 5px !important;
+  }
+
+  h1{
+    font-size: 14pt;
+  }
+
+  #wb-sm, #wb-srch{
+    display: none !important;
+  }
+
+  .panel .panel-heading{
+    height: 32px;
+  }
+
+  .pagedetails{
+    padding: 0px;
+  }
+
+  #wb-dtmd, #wb-dtmd > dd {
+    margin: 0px;
+  }
+
+  table tfoot{
+    display: table-row-group;
+  }
+  .sorting-icons, #status_report_table_filter, #status_report_table_info, status_report_table_length{
+    display: none !important;
+  }
+  .table-responsive{
+    overflow-x: hidden !important;
+  }
+  #map-note{
+    display: none !important;
+  }
+  #map{
+    height: 50em !important;
+  }
+  .map-table form .table-responsive table{
+    break-inside: avoid !important;
+  }
+  .map-legend{
+    width: 100% !important;
+    height: 10em !important;
+  }
+  .map-legend > .row > div{
+    width: 50% !important;
+    font-size: 80% !important;
+  }
+  #result .table-responsive{
+    width: 100% !important;
+  }
+  #result .table-responsive > *{
+    font-size: 0.75em !important;
+  }
+  /*---------------------CHROME SPECIFIC CSS------------------------*/
+  @media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
+    .selector:not(*:root), table tbody {
+      break-inside: avoid !important;
+    }
+    .selector:not(*:root), #graph .flot-base, #graph .flot-overlay{
+      width: 100% !important;
+    }
+    .selector:not(*:root), #graph .flot-text .flot-y2-axis div{
+      left: 97% !important;
+    }
+  }
+/*-----------------------------------------------------------------*/
+  #data-col-hist{
+    width: 100% !important;
+  }
+
+  #legend{
+    padding: 0 !important;
+    margin: 0 0 2% 0 !important;
+  }
+  #legend .panel-heading{
+    width: 100% !important;
+    margin: 0 0 0 0 !important;
+    height: 1% !important;
+  }
+  #legend #flot-legend{
+    width: 100% !important;
+    margin: 0 0 0 0 !important;
+  }
+  #legend #flot-legend > .row{
+    width: 100% !important;
+    margin: 0 0 0 0 !important;
+  }
+  #legend #flot-legend > .row > div{
+    width: 33.3333%;
+    display: inline-block !important;
+    padding-right: 0 !important;
+    margin: 0 0 0 0 !important;
+  }
+  #flot-legend > .row > div:first-child:nth-last-child(7),
+  #flot-legend > .row > div:first-child:nth-last-child(7) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(8),
+  #flot-legend > .row > div:first-child:nth-last-child(8) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(9),
+  #flot-legend > .row > div:first-child:nth-last-child(9) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(10),
+  #flot-legend > .row > div:first-child:nth-last-child(10) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(11),
+  #flot-legend > .row > div:first-child:nth-last-child(11) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(12),
+  #flot-legend > .row > div:first-child:nth-last-child(12) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(13),
+  #flot-legend > .row > div:first-child:nth-last-child(13) ~ div,
+  #flot-legend > .row > div:first-child:nth-last-child(14),
+  #flot-legend > .row > div:first-child:nth-last-child(14) ~ div {
+      width: 20% !important;
+      font-size: 80% !important;
+  }
+  #legend #flot-legend > .row > div > .row{
+    width: 100% !important;
+    margin: 0 0 0 0 !important;
+  }
+  #legend #flot-legend > .row > div > .row > div:last-child{
+    width: 50% !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    font-size: 70% !important;
+  }
+  #legend #flot-legend > .row > div > .row > div:first-child{
+    width: 50% !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+  /*-----------MOZZILA-----------*/
+  @-moz-document url-prefix() {
+
+    .quick-graph{
+      box-sizing: border-box !important;
+    }
+    .quick-graph .flot-text{
+      width: inherit !important;
+      box-sizing: border-box !important;
+    }
+    .quick-graph .flot-text .flot-y2-axis .tickLabel{
+      font-size: xx-small !important;
+      transform: translateX(-14em) !important;
+    }
+    .padding-lft-0{
+      padding-left: 0 !important;
+    }
+
+    .graph-container{
+      width: 61em !important;
+
+      height: 45em !important;
+      margin-bottom: 0 !important;
+    }
+    .graph-container .y1, .graph-container .y2{
+      transform: translateY(-70%) !important;
+    }
+    .graph-container .x{
+      transform: translateY(-28em) !important;
+    }
+    .clearfix, .metadata, #data-col-hist{
+      width: 57em !important;
+      margin: 0 0 0 0 !important;
+    }
+    .clearfix{
+      display: none !important;
+    }
+    #data-col-hist{
+      position: relative !important;
+      page-break-inside: avoid !important;
+    }
+    #graph{
+      transform-origin: top left;
+      transform: scale(0.60);
+    }
+    #graph .flot-text .flot-x-axis div{
+      page-break-before: always !important;
+      transform: rotate(0deg) !important;
+    }
+  }
+
+/*--------------------------------*/
+
+  .quick-graph .flot-base{
+    width: inherit !important;
+    left: 1% !important;
+  }
+  .quick-graph .flot-text .flot-y1-axis .tickLabel{
+    font-size: xx-small !important;
+    right: 100% !important;
+  }
+  .quick-graph .flot-text .flot-y2-axis .tickLabel{
+    font-size: xx-small !important;
+    transform: translateX(-15em);
+  }
+  .quick-graph .flot-text .flot-x-axis .tickLabel{
+    font-size: xx-small !important;
+    right: 100% !important;
+    width: 100% !important;
+  }
+
+
+/*Fix for x axis alignment for printing*/
+  .quick-graph .flot-text .flot-x-axis .tickLabel:nth-child(1){
+    left: 0% !important;
+    position: absolute !important;
+  }
+  .quick-graph .flot-text .flot-x-axis .tickLabel:nth-child(2){
+    left: 21% !important;
+    position: absolute !important;
+  }
+  .quick-graph .flot-text .flot-x-axis .tickLabel:nth-child(3){
+    left: 42% !important;
+    position: absolute !important;
+  }
+  .quick-graph .flot-text .flot-x-axis .tickLabel:nth-child(4){
+    left: 63% !important;
+    position: absolute !important;
+  }
+/*--------------------------------------*/
+  .panel-title{
+    font-size: 17px;
+  }
+
+  .panel-body{
+    padding:0 !important;
+  }
+  .row{
+    margin-top:0 !important;
+  }
+  #wb-cont{
+    margin-bottom: 0;
+  }
+  #wb-lng{
+    display: none;
+  }
+  .breadcrumb{
+    display: none !important;
+  }
+
+  .graph{
+    width: 100% !important;
+    margin-top: 0;
+    transform: scale(0.85);
+    transform-origin: left top;
+    margin-bottom: 0;
+  }
+  .pagination{
+    display: none;
+  }
+  .quick-graph{
+    margin-top: 0 !important;
+    width: 100% !important;
+    height: 150px !important;
+  }
+  .quick-graph .flot-text .flot-y-axis{
+    transform: translateY(4%) !important;
+  }
+  .y1 .glyphicon-stop:before{
+    color:#6E6EEE !important;
+  }
+  .y2 .glyphicon-stop:before{
+    color:#66CC66 !important;
+  }
+  .glyphicon-exclamation-sign:before{
+    color:#a94442 !important;
+  }
+  .watch-list h3, .watch-list a, .watch-list span, .watch-list .text-center span, .watch-list .text-center{
+    font-size: small;
+    margin-bottom: -3% !important;
+  }
+  .graph .h5{
+    font-size: small;
+    margin-bottom: 0 !important;
+  }
+  .graph .h5 .y1, .graph .h5 .y2{
+    margin-bottom: 2% !important;
+  }
+  .text-danger{
+    font-size: small !important;
+  }
+
+  .graph h3 .y1{
+    font-size: x-small !important;
+    text-align: left;
+    float: left;
+  }
+  .graph h3 .y2{
+    font-size: x-small !important;
+    text-align: right;
+    float: right;
+  }
+  div.row::after{
+    content: none !important;
+  }
+  .panel-heading{
+    padding: 0 !important;
+  }
+  dd, dt{
+    display: inline;
+  }
+  .pagedetails .row, #wb-dtmd{
+    display: none;
+  }
+  .rm-pd-mrgn{
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  #wb-dtmd{
+    font-size: 9px !important;
+  }
+  .watch-list{
+   min-width: 250px;
+   line-height: 0.8em !important;
+ }
+  .watch-list .panel-body{
+    height: 5em !important;
+  }
+  .padding-rght-0{
+    padding-right: 0 !important;
+  }
+  .watch-list h3{
+    font-size: x-small;
+    transform: translateY(50%);
+  }
+  .watch-list .panel-body .row *{
+    font-size: xx-small;
+  }
+  .watch-list .panel-body .row{
+    margin-left: 0 !important;
+  }
+  .watch-list .panel-body .row > div{
+    width: initial !important;
+  }
+  .watch-list img{
+    transform-origin: center top;
+    transform: scale(1,0.79);
+  }
+  .q-graph{
+    border: none !important;
+  }
+  .q-graph summary.panel-heading{
+    margin-bottom: 0 !important;
+    height: 50% !important;
+  }
+  /*----------Removing arrow from panel heading------------*/
+  .q-graph summary.panel-heading::-webkit-details-marker{ /*Chrome fix*/
+    display:none;
+   }
+   .q-graph summary.panel-heading::before{ /*IE and Edge */
+   display:none;
+   }
+   .q-graph summary.panel-heading:first-of-type{ /*Firefox */
+     list-style-type: none;
+   }
+   .q-graph summary.panel-heading{
+     border:none;
+   }
+   /*------------------------------------------------------*/
+
+  @supports (display:-ms-grid){ /* Microsoft Edge support */
+    .quick-graph .flot-text .flot-y2-axis .tickLabel{
+      font-size: xx-small !important;
+      transform: translateX(-19.5em);
+    }
+    .graph{
+      page-break-inside: avoid;
+      margin-bottom: -0.8em;
+      margin-top: -1em;
+    }
+    .q-graph summary.panel-heading{
+      border: none !important;
+     padding: 0 !important;
+     margin-bottom: 3px !important;
+    }
+    .q-graph .panel-heading .panel-title{
+      vertical-align: top;
+    }
+    .watch-list{
+      width: 295px !important;
+    }
+   .q-graph > .panel-heading > .panel-title{
+      vertical-align: top;
+      font-size: 80% !important;
+    }
+    #graph canvas, #graph .flot-text .flot-x-axis{
+      transform-origin: top left;
+      transform: scaleX(0.95) !important;
+    }
+    #graph .flot-text .flot-y2-axis div{
+      left: 97% !important;
+    }
+  }
+    _:lang(x)::-ms-backdrop, #graph canvas, #graph .flot-text .flot-x-axis{
+      transform-origin: top left;
+      transform: scaleX(0.95) !important;
+    }
+    _:lang(x)::-ms-backdrop, #graph .flot-text .flot-y2-axis div{
+      left: 97% !important;
+    }
+  /*---------------IE Watch List & Quick Graph-----------------*/
+    _:lang(x)::-ms-backdrop, .watch-list .panel-body .row > div{
+      width: auto !important;
+    }
+    _:lang(x)::-ms-backdrop, .watch-list{
+      width: 295px !important;
+    }
+    _:lang(x)::-ms-backdrop, .quick-graph .flot-text .flot-y2-axis .tickLabel{
+      transform: translateX(-17em);
+    }
+    _:lang(x)::-ms-backdrop, .graph{
+      page-break-inside: avoid;
+      margin-bottom: -0.7em;
+      margin-top: -0.8em;
+    }
+    _:lang(x)::-ms-backdrop, .quick-graph{
+      margin-top: -4em;
+    }
+
+
+     _:lang(x)::-ms-backdrop, .q-graph summary.panel-heading{
+       border: none !important;
+      padding: 0 !important;
+      margin-bottom: 3px !important;
+    }
+    _:lang(x)::-ms-backdrop, .q-graph > .panel-heading > .panel-title{
+      vertical-align: top;
+      font-size: 80% !important;
+    }
+
+    _:lang(x)::-ms-backdrop, .q-graph .panel-heading .panel-title{
+      vertical-align: top;
+    }
+    /*---------------IE------------------*/
+}

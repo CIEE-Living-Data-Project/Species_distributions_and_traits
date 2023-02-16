@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)https://wateroffice.ec.gc.ca/download/csv_help_e.html -->
+<html class="js backgroundsize borderimage csstransitions fontface svg details progressbar meter mathml cors xlargeview wb-enable" lang="en" dir="ltr"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<!-- Web Experience Toolkit (WET) / Boîte à outils de l'expérience Web (BOEW)
+		wet-boew.github.io/wet-boew/License-en.html / wet-boew.github.io/wet-boew/Licence-fr.html -->
+<title>CSV Format Description - Water Level and Flow - Environment Canada</title>
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<meta name="description" content=""><!--[if gte IE 9 | !IE ]><!-->
+<link rel="apple-touch-icon" sizes="57x57 72x72 114x114 144x144 150x150" class="wb-favicon" href="https://wateroffice.ec.gc.ca/vendor/wet/v5.1.0/GCWeb/assets/favicon-mobile.png"><link href="https://wateroffice.ec.gc.ca/vendor/wet/v5.1.0/GCWeb/assets/favicon.ico" rel="icon" type="image/x-icon" class="wb-init wb-favicon-inited">
+<link rel="stylesheet" href="./Data_Dictionary_fraser_river_flow_files/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link rel="stylesheet" href="./Data_Dictionary_fraser_river_flow_files/theme.min.css">
+<!--<![endif]-->
+<!--[if lt IE 9]>
+		<link href="/vendor/wet/v5.1.0/GCWeb/assets/favicon.ico" rel="shortcut icon" />
+		<link rel="stylesheet" href="/vendor/wet/v5.1.0/GCWeb/css/ie8-theme.min.css" />
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="/vendor/wet/v5.1.0/wet-boew/js/ie8-wet-boew.min.js"></script>
+		<![endif]-->
+<!--[if lte IE 9]>
+		<![endif]-->
+<noscript><link rel="stylesheet" href="/vendor/wet/v5.1.0/wet-boew/css/noscript.min.css" /></noscript>
+<link href="./Data_Dictionary_fraser_river_flow_files/application.css" rel="stylesheet">
+<link href="./Data_Dictionary_fraser_river_flow_files/print.css" rel="stylesheet">
+</head>
+<body vocab="http://schema.org/" typeof="WebPage" cz-shortcut-listen="true">
+<script src="./Data_Dictionary_fraser_river_flow_files/en.min.js.download"></script><script src="./Data_Dictionary_fraser_river_flow_files/jquery.magnific-popup.min.js.download"></script><script async="" src="./Data_Dictionary_fraser_river_flow_files/js"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CS8ZLP6TEM');
+</script>
+<nav>
+<ul id="wb-tphp" class="wb-init wb-disable-inited">
+<li class="wb-slc">
+<a class="wb-sl" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#wb-cont">Skip to main content</a>
+</li>
+<li class="wb-slc">
+<a class="wb-sl" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#wb-info">Skip to "About government"</a>
+</li>
+<li class="wb-slc"><a class="wb-sl" rel="alternate" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html?wbdisable=true">Switch to basic HTML version</a></li></ul>
+</nav>
+<header>
+<div id="wb-bnr" class="container">
+<section id="wb-lng" class="text-right">
+<h2 class="wb-inv">Language selection</h2>
+<ul class="list-inline margin-bottom-none">
+<li><a lang="fr" href="https://eau.ec.gc.ca/download/csv_help_f.html">Français</a></li>
+</ul>
+</section>
+<div class="row">
+<div class="brand col-xs-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
+<a href="https://www.canada.ca/en.html" property="url"><img src="./Data_Dictionary_fraser_river_flow_files/sig-blk-en.svg" alt="" property="logo"><span class="wb-inv" property="name"> Government of Canada / <span lang="fr">Gouvernement du Canada</span></span></a>
+<meta property="areaServed" typeof="Country" content="Canada">
+<link property="logo" href="./Data_Dictionary_fraser_river_flow_files/wmms-blk.svg">
+</div>
+<section id="wb-srch" class="col-lg-8 text-right">
+<h2>Search</h2>
+      <form action="https://canada.ca/en/sr/srb.html" method="get" name="cse-search-box" role="search" class="form-inline">
+        <div class="form-group wb-srch-qry">
+          <label for="wb-srch-q" class="wb-inv">Search Canada.ca</label>
+          <input name="cdn" value="canada" type="hidden">
+          <input name="st" value="s" type="hidden">
+          <input name="num" value="10" type="hidden">
+          <input name="langs" value="en" type="hidden">
+          <input name="st1rt" value="1" type="hidden">
+          <input name="s5bm3ts21rch" value="x" type="hidden">
+          <input id="wb-srch-q" list="wb-srch-q-ac" class="wb-srch-q form-control" name="q" type="search" value="" size="34" maxlength="170" placeholder="Search Canada.ca">
+          <input type="hidden" name="_charset_" value="UTF-8">
+          <datalist id="wb-srch-q-ac">
+          </datalist>
+        </div>
+        <div class="form-group submit">
+          <button type="submit" id="wb-srch-sub" class="btn btn-primary btn-small" name="wb-srch-sub"><span class="glyphicon-search glyphicon"></span><span class="wb-inv">Search</span></button>
+        </div>
+      </form></section>
+</div>
+</div>
+<nav class="gcweb-menu wb-init gcweb-menu-inited" typeof="SiteNavigationElement" id="wb-auto-2">
+<div class="container">
+<h2 class="wb-inv">Menu</h2>
+<button type="button" aria-haspopup="true" aria-expanded="false" aria-label="Press the SPACEBAR to expand or the escape key to collapse this menu. Use the Up and Down arrow keys to choose a submenu item. Press the Enter or Right arrow key to expand it, or the Left arrow or Escape key to collapse it. Use the Up and Down arrow keys to choose an item on that level and the Enter key to access it."><span class="wb-inv">Main </span>Menu <span class="expicon glyphicon glyphicon-chevron-down"></span></button>
+<ul role="menu" aria-orientation="vertical" data-ajax-replace="/data/pco-fetch/sitemenu-v2-en.html" class="wb-init wb-data-ajax-replace-inited" id="wb-auto-3"><li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-jobs" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Jobs and the workplace</a>
+  <ul id="gc-mnu-jobs" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/jobs.html">Jobs<span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/jobs/opportunities.html">Find a job</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/jobs/training.html">Training</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/business-management">Hiring and managing employees</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/start-business">Starting a business</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/jobs/workplace.html">Workplace standards</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/pensions.html">Pensions and retirement</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/ei.html">Employment Insurance benefits and leave</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-jobs-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-jobs-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/employment-social-development/programs/ei/ei-list/ei-roe/access-roe.html">View your Records of Employment</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/employment-social-development/services/sin.html">Apply for a Social Insurance Number (SIN)</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/employment-social-development/services/foreign-workers.html">Hire a temporary foreign worker</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry.html">Immigrate as a skilled worker</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-cit" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Immigration and citizenship</a>
+  <ul id="gc-mnu-cit" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/immigration-citizenship.html">Immigration<span class="hidden-xs hidden-sm"> and citizenship</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/application.html">My application</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html">Visit</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html">Immigrate</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html">Work</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada.html">Study</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/canadian-citizenship.html">Citizenship</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/new-immigrants.html">New immigrants</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/canadians.html">Canadians</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/refugees.html">Refugees and asylum</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/immigration-citizenship/enforcement-violations.html">Enforcement and violations</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-cit-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-cit-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/application/account.html">Sign in or create an account to apply online</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/application/check-status.html">Check your application status</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/application/check-processing-times.html">Check application processing times</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/application/application-forms-guides.html">Find an application form</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.cic.gc.ca/english/information/fees/index.asp">Pay your fees</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.cic.gc.ca/english/visit/visas.asp">Find out if you need an eTA or a visa to visit Canada</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.cic.gc.ca/english/helpcentre/index-featured-can.asp">Have questions? Find answers in the Help Centre</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-travel" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Travel and tourism</a>
+  <ul id="gc-mnu-travel" role="menu" aria-orientation="vertical">
+	<li role="presentation"> <a role="menuitem" tabindex="-1" href="https://travel.gc.ca/">Travel<span class="hidden-xs hidden-sm"> and tourism</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/travelling/advisories">Travel advice and advisories</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/travel-covid">COVID-19: Travel, testing and borders</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html?outside">Visit Canada</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/travelling">Travel outside Canada</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/air">Air travel</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/returning">Return to Canada</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/canadian-passports.html">Canadian passports and travel documents</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/canadian-tourism">Canadian attractions, events and experiences</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/assistance">Assistance outside Canada</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/stay-connected">Stay connected</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-travel-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-travel-sub" role="menu" aria-orientation="vertical">
+		  <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.cic.gc.ca/english/visit/visas.asp">Find out if you need a visa to travel to Canada</a></li>
+		  <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada/eta.html">Apply for an eTA</a></li>
+		  <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.cbsa-asfc.gc.ca/prog/nexus/application-demande-eng.html">Apply for NEXUS</a></li>
+		  <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/travelling/registration">Register as a Canadian abroad</a></li>
+		  <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/travelling/documents/travel-insurance">Travel insurance</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-biz" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Business and industry</a>
+  <ul id="gc-mnu-biz" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business.html">Business<span class="hidden-xs hidden-sm"> and industry</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/start.html">Starting a business</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/grants.html">Business grants and financing</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/taxes.html">Business taxes</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/federal-corporations.html">Federal corporations</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/hire.html">Hiring and managing employees</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/trade.html">International trade and investment</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/permits.html">Permits, licences and regulations</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/doing-business.html">Doing business with government</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/innovation.html">R&amp;D and innovation</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/research.html">Research and business intelligence</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/ip.html">Intellectual property and copyright</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/maintaingrowimprovebusiness.html">Maintaining your business</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/protecting.html">Protecting your business</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/bankruptcy.html">Insolvency for business</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-biz-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-biz-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.ic.gc.ca/app/scr/cc/CorporationsCanada/fdrlCrpSrch.html?locale=en_CA">Find a corporation</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.cbsa-asfc.gc.ca/prog/manif/portal-portail-eng.html">Report your imported goods</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.ic.gc.ca/app/opic-cipo/trdmrks/srch/home?lang=eng">Search for trademarks</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.cbsa-asfc.gc.ca/trade-commerce/tariff-tarif/2018/html/tblmod-1-eng.html">Review custom tariffs for importing goods</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.ic.gc.ca/opic-cipo/cpd/eng/introduction.html">Find a patent</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.cbsa-asfc.gc.ca/comm-eng.html">Import and export from Canada</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://ic.gc.ca/eic/site/cd-dgc.nsf/eng/h_cs03922.html">Name a business</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.ic.gc.ca/app/scr/cc/CorporationsCanada/hm.html?locale=en_CA">Make changes to your corporation (Online Filing Centre)</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-benny" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Benefits</a>
+  <ul id="gc-mnu-benny" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits.html">Benefits<span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/ei.html">Employment Insurance benefits and leave</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/family.html">Family and caregiving benefits</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/publicpensions.html">Public pensions</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/education.html">Student aid and education planning</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/housing.html">Housing benefits</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/disability.html">Disability benefits</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.canada.ca/en/services/benefits/audience.html">Benefits by audience</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/calendar.html">Benefits payment dates</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://benefitsfinder.services.gc.ca/hm?GoCTemplateCulture=en-CA">Benefits finder</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/notify-government-death.html">Notify the government of a death</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-benny-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-benny-sub" role="menu" aria-orientation="vertical">
+
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/ei/ei-regular-benefit.html">Apply for Employment Insurance</a></li>
+
+       <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/education/student-aid/grants-loans.html">Apply for student loans and grants</a></li>
+       <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/government/sign-in-online-account.html">Sign in to a Government of Canada online account</a></li>
+
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.tpsgc-pwgsc.gc.ca/recgen/txt/depot-deposit-eng.html">Sign up for direct deposit</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/benefits/ei/ei-internet-reporting.html">Submit your EI report</a></li>
+
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.cra-arc.gc.ca/bnfts/clcltr/cfbc-eng.html">Child and family benefits calculators</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-health" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Health</a>
+  <ul id="gc-mnu-health" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health.html">Health<span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/food-nutrition.html">Food and nutrition</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/public-health/services/diseases.html">Diseases and conditions</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/public-health/topics/immunization-vaccines.html">Vaccines and immunization</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/drug-health-products.html">Drug and health products</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/product-safety.html">Product safety</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/health-risks-safety.html">Health risks and safety</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/healthy-living.html">Healthy living</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/aboriginal-health.html">Indigenous health</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/health-system-services.html">Health system and services</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/health/science-research-data.html">Science, research and data</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-health-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-health-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/health-canada/services/drugs-medication/cannabis/industry-licensees-applicants/licensed-cultivators-processors-sellers.html">Licensed cultivators, processors and seller of cannabis</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://healthycanadians.gc.ca/recall-alert-rappel-avis/index-eng.php">Food and product recalls and safety alerts</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/health-canada/services/canada-food-guides.html">Canada's food guide</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-taxes" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Taxes</a>
+  <ul id="gc-mnu-taxes" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes.html">Taxes<span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes/income-tax.html">Income tax</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses.html">GST/HST</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll.html">Payroll</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes/business-number.html">Business number</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes/savings-and-pension-plans.html">Savings and pension plans</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes/child-and-family-benefits.html">Tax credits and benefits for individuals</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes/excise-taxes-duties-and-levies.html">Excise taxes, duties, and levies</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes/charities.html">Charities and giving</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-taxes-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-taxes-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/e-services/e-services-individuals/account-individuals.html">My Account</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/business-account.html">My Business Account</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/e-services/represent-a-client.html">Represent a Client</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/gst-hst-netfile.html">File a GST/HST return (NETFILE)</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/make-a-payment-canada-revenue-agency.html">Make a payment to the Canada Revenue Agency</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/child-family-benefits/benefit-payment-dates.html">Find the next benefit payment date</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-enviro" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Environment and natural resources</a>
+  <ul id="gc-mnu-enviro" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment.html">Environment<span class="hidden-xs hidden-sm"> and natural resources</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/weather.html">Weather, climate and hazards</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/energy.html">Energy</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/natural-resources.html">Natural resources</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://agriculture.canada.ca/en/agriculture-and-environment">Agriculture and the environment</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/fisheries.html">Fisheries</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/wildlife-plants-species.html">Wildlife, plants and species</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/pollution-waste-management.html">Pollution and waste management</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/environment/conservation.html">Environmental conservation and protection</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-enviro-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-enviro-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://weather.gc.ca/canada_e.html">Local weather forecast</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.nrcan.gc.ca/energy/efficiency/transportation/20996">Fuel-efficient vehicles</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.nrcan.gc.ca/homes">Home energy efficiency</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/environment-climate-change/services/species-risk-public-registry.html">Species at risk</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/environment-climate-change/services/seasonal-weather-hazards.html">Prepare for severe weather</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-defence" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">National security and defence</a>
+  <ul id="gc-mnu-defence" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence.html"><span class="hidden-xs hidden-sm">National security and defence</span><span class="visible-xs-inline visible-sm-inline">Defence: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/nationalsecurity.html">National security</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/caf.html">Canadian Armed Forces</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/defence-equipment-purchases-upgrades.html">Defence equipment purchases and upgrades</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/transportation-security.html">Transportation security</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/securingborder.html">Securing the border</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/cybersecurity.html">Cyber security</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/jobs.html">Jobs in national security and defence</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/government/publicservice/benefitsmilitary.html">Services and benefits for the military</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-defence-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-defence-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://forces.ca/en/careers/">Jobs in the Canadian Armed Forces</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/department-national-defence/services/military-history/history-heritage/insignia-flags/ranks/rank-appointment-insignia.html">Military ranks</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/defence/caf/equipment.html">Defence equipment</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.publicsafety.gc.ca/cnt/ntnl-scrt/cntr-trrrsm/lstd-ntts/crrnt-lstd-ntts-en.aspx">Current list of terrorist entities</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/department-national-defence/services/cadets-junior-canadian-rangers/cadets/join-us.html">Join the Cadet Program</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://dgpaapp.forces.gc.ca/en/canada-defence-policy/index.asp">Canada's Defence policy</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-culture" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Culture, history and sport</a>
+  <ul id="gc-mnu-culture" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture.html">Culture<span class="hidden-xs hidden-sm">, history and sport</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/canadian-heritage/services/funding.html">Funding - Culture, history and sport</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/events-celebrations-commemorations.html">Events, celebrations and commemorations</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/cultural-attractions.html">Cultural landmarks and attractions</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/canadian-identity-society.html">Canadian identity and society</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/sport.html">Sport</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/history-heritage.html">History and heritage</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/arts-media.html">Arts and media</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/cultural-youth-programs.html">Cultural youth programs</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/cultural-trade-investment.html">Cultural trade and investment</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-culture-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-culture-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.veterans.gc.ca/eng/remembrance/memorials/canadian-virtual-war-memorial">Visit the Canadian Virtual War Memorial</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/canadian-identity-society/anthems-symbols.html">Anthems and symbols of Canada</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://crtc.gc.ca/eng/8045/d2018.htm">Find a CRTC decision</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://library-archives.canada.ca/eng/collection/research-help/genealogy-family-history/pages/genealogy-family-history.aspx">Research your family history</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.bac-lac.gc.ca/eng/census/Pages/census.aspx">Search census records</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/culture/cultural-attractions/attractions-canada-capital.html">Landmarks and attractions in Canada's capital</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-policing" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Policing, justice and emergencies</a>
+  <ul id="gc-mnu-policing" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing.html">Policing<span class="hidden-xs hidden-sm">, justice and emergencies</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/police/index.html">Policing</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/justice.html">Justice</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/emergencies.html">Emergencies</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/corrections.html">Corrections</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/parole.html">Parole, record suspension, expungement and clemency</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/victims.html">Victims of crime</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-policing-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-policing-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.rcmp-grc.gc.ca/cfp-pcaf/online_en-ligne/index-eng.htm">Apply/Renew a firearms licence</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.rcmp-grc.gc.ca/en/criminal-record-checks">Get a criminal records check</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/parole-board/services/record-suspensions/official-pbc-application-guide-and-forms.html">Apply for a criminal record suspension</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.getprepared.gc.ca/cnt/hzd/drng-en.aspx">What to do during an emergency</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/police/community-safety-policing/impaired-driving.html">Know the law on impaired driving</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/policing/police/help-solve-crime.html">Help solve a crime</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-trans" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Transport and infrastructure</a>
+  <ul id="gc-mnu-trans" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/transport.html">Transport<span class="hidden-xs hidden-sm"> and infrastructure</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/aviation.html">Aviation</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/marine.html">Marine transportation</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/road.html">Road transportation</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/rail.html">Rail transportation</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/dangerous-goods.html">Dangerous goods</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/infrastructure.html">Infrastructure</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-trans-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-trans-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/aviation/drone-safety.html">Drone safety</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://tc.canada.ca/en/aviation/aviation-security/what-not-bring-plane">What you can't bring on an airplane</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/eng/marinesafety/oep-vesselreg-menu-728.htm">Register your vessel</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/en/services/road/child-car-seat-safety.html">Child car seat safety</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/eng/tdg/clear-tofc-211.htm">Transporting dangerous goods - Regulations</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.tc.gc.ca/eng/acts-regulations/regulations-sor96-433.htm">Canadian Aviation Regulations</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-canworld" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Canada and the world</a>
+  <ul id="gc-mnu-canworld" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/index.aspx?lang=eng">Canada and the world<span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/offices-bureaux/index.aspx?lang=eng">International offices and emergency contacts</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/study_work_travel-etude_travail_voyage/index.aspx?lang=eng">Study, work and travel worldwide</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/country-pays/index.aspx?lang=eng">Information by countries and territories</a></li> 
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://international.gc.ca/world-monde/stories-histoires/index.aspx?lang=eng">Stories</a></li>  
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/international_relations-relations_internationales/index.aspx?lang=eng">International relations</a></li> 
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/issues_development-enjeux_developpement/index.aspx?lang=eng">Global issues and international assistance</a></li>  
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/world-monde/funding-financement/index.aspx?lang=eng">Funding for international initiatives</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="http://www.canada.ca/en/services/business/trade/index.html">International trade and investment</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-canworld-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-canworld-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.international.gc.ca/world-monde/covid-19/index.aspx?lang=eng">COVID-19: Trade, foreign affairs, international trade and development</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://educanada.ca/scholarships-bourses/non_can/index.aspx?lang=eng">Find a Canadian scholarship as an international student</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://treaty-accord.gc.ca/index.aspx">International treaties signed by Canada</a></li>  
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://educanada.ca/index.aspx?lang=eng">Find international study or research opportunities in Canada</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://travel.gc.ca/assistance/embassies-consulates">Contact an embassy or consulate</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://international.gc.ca/protocol-protocole/reps.aspx?lang=eng">Contact a foreign representative in Canada</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.international.gc.ca/gac-amc/about-a_propos/services/authentication-authentification/step-etape-1.aspx?lang=eng">Authenticate a document</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-money" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Money and finances</a>
+  <ul id="gc-mnu-money" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance.html"><span class="hidden-xs hidden-sm">Money and finances</span><span class="visible-xs-inline visible-sm-inline">Finance: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/manage.html">Managing your money</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/debt.html">Debt and borrowing</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/savings.html">Savings and investments</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/educationfunding.html">Education funding</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/pensions.html">Pensions and retirement</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/fraud.html">Protection from frauds and scams</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/tools.html">Financial tools and calculators</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/financial-consumer-agency/services/financial-literacy-programs.html">Financial literacy programs</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/consumer-affairs.html">Consumer affairs</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/finance/bankruptcy.html">Insolvency</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/taxes.html">Taxes</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/government/system/finances.html">Government finances</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/grants.html">Business grants and financing</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/permits/federallyregulatedindustrysectors/financialservicesregulation.html">Financial and money services regulation</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-money-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-money-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.ic.gc.ca/app/scr/bsf-osb/ins/login.html?lang=eng">Find a bankruptcy or insolvency record</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/jobs/education/student-financial-aid/student-loan.html">Student loans</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.tpsgc-pwgsc.gc.ca/recgen/txt/depot-deposit-eng.html">Set up direct deposit</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/financial-consumer-agency/services/mortgages.html">Mortgages</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/financial-consumer-agency/services/credit-reports-score.html">Credit report and scores</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://itools-ioutils.fcac-acfc.gc.ca/BC-CB/NetInc-RevNet-eng.aspx">Make a budget</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/revenue-agency/services/tax/registered-plans-administrators/pspa/mp-rrsp-dpsp-tfsa-limits-ympe.html">Rates and contribution limits</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li role="presentation"> <a role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-science" aria-expanded="false" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#">Science and innovation</a>
+  <ul id="gc-mnu-science" role="menu" aria-orientation="vertical">
+    <li role="presentation"> <a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science.html">Science<span class="hidden-xs hidden-sm"> and innovation</span><span class="visible-xs-inline visible-sm-inline">: home</span></a> </li>
+    <li role="separator"></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/researchfunding.html">Research funding and awards</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/sciencesubjects.html">Science subjects</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/open-data.html">Open data, statistics and archives</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/institutes.html">Research institutes and facilities</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/innovation.html">R&amp;D and innovation</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/business/ip.html">Intellectual property and copyright</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/scientistsdirectory.html">Directory of scientists and research professionals</a></li>
+    <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.canada.ca/en/services/science/educationalresources.html">Science education resources</a></li>
+    <li role="separator" aria-orientation="vertical"></li>
+    <li role="presentation"> <a data-keep-expanded="md-min" href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#" role="menuitem" tabindex="-1" aria-haspopup="true" aria-controls="gc-mnu-science-sub" aria-expanded="true">Most requested</a>
+      <ul id="gc-mnu-science-sub" role="menu" aria-orientation="vertical">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.nrc-cnrc.gc.ca/eng/publications/codes_centre/2015_national_building_code.html">National building codes</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.nrc-cnrc.gc.ca/eng/services/time/web_clock.html#tzpanel-4">Official time across Canada</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.nrc-cnrc.gc.ca/eng/services/sunrise/index.html">Check sunrise and sunset times</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://www.nrc-cnrc.gc.ca/eng/irap/services/financial_assistance.html">Grants for technological innovation (IRAP)</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="https://science-libraries.canada.ca/eng/home/">Federal Science Library</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="http://asc-csa.gc.ca/eng/astronomy/auroramax/hd-480.asp">Live view of northern lights cam</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+</ul>
+</div>
+</nav>
+<nav id="wb-bc" property="breadcrumb">
+<h2>You are here:</h2>
+<div class="container">
+<ol class="breadcrumb">
+<li><a href="http://www.canada.ca/en/index.html">Home</a></li><li><a href="http://www.canada.ca/en/services/environment/index.html">Environment and natural resources</a></li><li><a href="https://wateroffice.ec.gc.ca/index_e.html">Water level and flow</a></li><li><a href="https://wateroffice.ec.gc.ca/mainmenu/historical_data_index_e.html">Historical Data</a></li><li><a href="https://wateroffice.ec.gc.ca/search/historical_e.html">Hydrometric Data Search</a></li></ol>
+</div>
+</nav>
+</header>
+<main property="mainContentOfPage" class="container" typeof="WebPageElement">
+<h1 property="name" id="wb-cont">CSV Format Description</h1><p>CSV file format stores data in plain-text form, separated by commas.</p>
+<section>
+  <h2>Historical Hydrometric Data Download</h2>
+  <section>
+    <h3>Daily Data</h3>
+    <section>
+      <h4>Comma Separated Values</h4>
+      <p> A time series per available parameters, with a header row between each time series.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <p>The unique 7-character station identification, in the format ddaaddd, where</p>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: TYPE</h5>
+        <p>The data type, where</p>
+        <ul>
+          <li>1: values in <abbr title="Cubic metre(s) per second">m<sup>3</sup>/s</abbr>)</li>
+          <li>8: values in m (to mm precision)</li>
+          <li>9: values in m (to cm precision)</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: YEAR</h5>
+        <p>The year, in the format yyyy.</p>
+      </section>
+      <section>
+        <h5>Column: DD</h5>
+        <p>The day of the month, in the format dd.</p>
+      </section>
+      <section>
+        <h5>Columns: JAN, FEB, MAR,AVR,MAR,JUN,JUL,AUG,SEP,OCT,NOV,DEC,SYM</h5>
+        <p>The values. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+    </section>
+    <section>
+      <h4>Date-Data Format</h4>
+      <p>A time series per available parameters.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: Date</h5>
+        <p>The date, in the format yyyy/mm/dd.</p>
+      </section>
+      <section>
+        <h5>Columns: Value,SYM</h5>
+        <p>The values. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+    </section>
+    <section>
+      <h4>Julian Date-Data Format</h4>
+      <p>A time series per available parameters.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: YEAR</h5>
+        <p>The year, in the format yyyy.</p>
+      </section>
+      <section>
+        <h5>Column: DD</h5>
+        <p>The day of the year, in the Julian date format.</p>
+      </section>
+      <section>
+        <h5>Columns: Value,SYM</h5>
+        <p>The values. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+    </section>
+  </section>
+  <section>
+    <h3>Monthly Data</h3>
+    <section>
+      <h4>Comma Separated Values</h4>
+      <p> A time series per available parameters, with a header row between each time series.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: TYPE</h5>
+        <p>The data type, where</p>
+        <ul>
+          <li>1: values in <abbr title="Cubic metre(s) per second">m<sup>3</sup>/s</abbr>)</li>
+          <li>8: values in m (to mm precision)</li>
+          <li>9: values in m (to cm precision)</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: YEAR</h5>
+        <p>The year, in the format yyyy.</p>
+      </section>
+      <section>
+        <h5>Columns: JAN, FEB, MAR,AVR,MAR,JUN,JUL,AUG,SEP,OCT,NOV,DEC,SYM</h5>
+        <p>The values. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column:Ann</h5>
+        <p>The sum of the monthly values.</p>
+      </section>
+      <section>
+    </section>
+    <section>
+      <h4>Date-Data Format</h4>
+      <p>A time series per available parameters.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: MM--YYYY</h5>
+        <p>The date, in the format mm--yyyy.</p>
+      </section>
+      <section>
+        <h5>Column: Value</h5>
+        <p>The value.</p>
+      </section>
+    </section>
+  </section>
+  <section>
+    <h3>Annual Extremes Data</h3>
+    <section>
+      <h4>Comma Separated Values</h4>
+      <p> A time series per available parameters.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <p>The unique 7-character station identification, in the format ddaaddd, where</p>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: YEAR,SYM</h5>
+        <p>The year, in the format yyyy. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column:HH:MM</h5>
+        <p>The time,in the format hh:mm.</p>
+      </section>
+      <section>
+        <h5>Column:TIMEZONE</h5>
+        <p>The time zone, where</p>
+        <ul>
+          <li>PST</li>
+          <li>MST</li>
+          <li>CST</li>
+          <li>EST</li>
+          <li>AST</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column:MM--DD</h5>
+        <p>The date, in the format mm--dd</p>
+      </section>
+      <section>
+        <h5>Columns:MAX,SYM</h5>
+        <p>The maximum value. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Columns:MIN,SYM</h5>
+        <p>The minimum value. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+    </section>
+  </section>
+  <section>
+    <h3>Peak Data</h3>
+    <section>
+      <h4>Comma Separated Values</h4>
+      <p> A time series per available parameters.</p>
+      <section>
+        <h5>Column: ID</h5>
+        <p>The unique 7-character station identification, in the format ddaaddd, where</p>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: PARAM</h5>
+        <p>The parameter codes, where</p>
+        <ul>
+          <li>1: discharge (flow)</li>
+          <li>2: water level</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: YEAR,SYM</h5>
+        <p>The year, in the format yyyy. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column:HH:MM</h5>
+        <p>The time,in the format hh:mm.</p>
+      </section>
+      <section>
+        <h5>Column:TIMEZONE</h5>
+        <p>The time zone, where</p>
+        <ul>
+          <li>PST</li>
+          <li>MST</li>
+          <li>CST</li>
+          <li>EST</li>
+          <li>AST</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column:MM--DD</h5>
+        <p>The date, in the format mm--dd</p>
+      </section>
+      <section>
+        <h5>Columns:MAX,SYM</h5>
+        <p>The maximum value. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Columns:MIN,SYM</h5>
+        <p>The minimum value. The associated columns SYM may be empty or contain the following</p>
+        <ul>
+          <li>A: partial day</li>
+          <li>B: ice conditions</li>
+          <li>D: dry</li>
+          <li>E: estimated</li>
+          <li>S: sample(s) collected this day</li>
+        </ul>
+      </section>
+    </section>
+  </section>
+  <section>
+    <h3>Station Information</h3>
+    <section>
+      <h4>Comma Seplarated Values</h4>
+      <p>The metadata of the station.</p>
+      <section>
+        <h5>Column: Station Number</h5>
+        <p>The unique 7-character station identification, in the format ddaaddd, where</p>
+        <ul>
+          <li>dd: 2 digits for the major drainage basin</li>
+          <li>aa: 1 alphabetic character each for the sub-basin and sub-sub-basin</li>
+          <li>ddd: 3 digits for the specific station within the sub-sub-basin</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: Station Name</h5>
+        <p>The name of the station. This field is enclosed in quotes since it may contain commas.</p>
+      </section>
+      <section>
+        <h5>Column: Province</h5>
+        <p>The province code where the station is located, where</p>
+        <ul>
+          <li>AB: Alberta </li>
+          <li>BC: British Columbia  </li>
+          <li>MB: Manitoba </li>
+          <li>NB: New Brunswick</li>
+          <li>NL: Newfoundland and Labrador</li>
+          <li>NS: Nova Scotia</li>
+          <li>NT: Northwest Territories</li>
+          <li>NU: Nunavut</li>
+          <li>ON: Ontario</li>
+          <li>PE: Prince Edward Island</li>
+          <li>QC: Quebec</li>
+          <li>SK: Saskatchewan</li>
+          <li>YT: Yukon Territory</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: Status</h5>
+        <p>The status of the station, where</p>
+        <ul>
+          <li>A: active</li>
+          <li>D: discontinued</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: Latitude</h5>
+        <p>The latitude of the station, in decimal degrees.</p>
+      </section>
+      <section>
+        <h5>Column: Longitude</h5>
+        <p>The longitude of the station, in decimal degrees.</p>
+      </section>
+      <section>
+        <h5>Column: Year From</h5>
+        <p>The first year for which there is data available, in the format yyyy.</p>
+      </section>
+      <section>
+        <h5>Column: Year To</h5>
+        <p>The last year for which there is data available, in the format yyyy.</p>
+      </section>
+      <section>
+        <h5>Column: Drainage Area</h5>
+        <p>The gross drainage area covered by the station, in <abbr title="Square kilometre(s)">km<sup>2</sup></abbr>.</p>
+      </section>
+      <section>
+        <h5>Column: Sediment</h5>
+        <p>A flag indicating if there is a sediment program at the station, where</p>
+        <ul>
+          <li>Y: yes</li>
+          <li>N: no</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: RHBN</h5>
+        <p>A flag indicating if the station is part of the RHBN, where</p>
+        <ul>
+          <li>Y: yes</li>
+          <li>N: no</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: Real-Time</h5>
+        <p>A flag indicating if the data is available in real-time, where</p>
+        <ul>
+          <li>Y: yes</li>
+          <li>N: no</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Column: Datum Name</h5>
+        <p>The name of the datum used.</p>
+      </section>
+    </section>
+  </section>
+</section>
+<div class="clearfix"></div>
+<!-- CustomScriptsStart -->
+<script type="text/javascript" src="./Data_Dictionary_fraser_river_flow_files/search.js.download"></script>
+<!-- CustomScriptsEnd -->
+<section id="water-topics" class="hidden-print">
+  <h2 class="wb-inv">What we are doing</h2>
+  <div class="row">
+    <section class="col-lg-4 col-md-6">
+      <h3>Real-time Data</h3>
+      <ul class="mrgn-bttm-lg">
+        <li><a href="https://wateroffice.ec.gc.ca/search/real_time_e.html">Real-time Station Search</a></li>
+        <li><a href="https://wateroffice.ec.gc.ca/map/index_e.html?type=real_time">Real-time Map Search</a></li>
+        <li><a href="https://wateroffice.ec.gc.ca/my_station_list/index_e.html">My Station List</a></li>
+      </ul>
+    </section>
+    <section class="col-lg-4 col-md-6">
+      <h3>Historical Data</h3>
+      <ul class="mrgn-bttm-lg">
+        <li><a href="https://wateroffice.ec.gc.ca/search/historical_e.html">Historical Station Search</a></li>
+        <li><a href="https://wateroffice.ec.gc.ca/map/index_e.html?type=historical">Historical Map Search</a></li>
+        <li><a href="https://wateroffice.ec.gc.ca/search/statistics_e.html">Additional Statistics</a></li>
+      </ul>
+    </section>
+    <section class="col-lg-4 col-md-6">
+      <h3>Resources</h3>
+      <ul class="mrgn-bttm-lg">
+        <li><a href="https://wateroffice.ec.gc.ca/disclaimer_info_e.html">Disclaimer for Hydrometric Information</a></li>
+        <li><a href="https://wateroffice.ec.gc.ca/contactus/faq_e.html">Frequently Asked Questions</a></li>
+                  <li><a href="https://www.canada.ca/en/environment-climate-change/services/meteorological-service-standards/publications/hydrometric-data-information.html">Hydrometric Data and Information Service Standards</a></li>
+              </ul>
+    </section>
+  </div>
+</section>
+<div class="pagedetails">
+<div class="row">
+<div class="col-sm-6 col-md-5 col-lg-4">
+<a href="https://wateroffice.ec.gc.ca/contactus/contact_us_e.html" class="btn btn-default btn-block"><span class="glyphicon glyphicon-comment mrgn-rght-sm"></span>Feedback<span class="wb-inv"> about this web site</span></a></div>
+<div class="wb-share col-sm-4 col-md-3 col-sm-offset-2 col-md-offset-4 col-lg-offset-5 wb-init wb-share-inited" data-wb-share="{&quot;lnkClass&quot;: &quot;btn btn-default btn-block&quot;}" id="wb-auto-4"><section id="shr-pg0" class="shr-pg mfp-hide modal-dialog modal-content overlay-def"><header class="modal-header"><h2 class="modal-title">Share this page</h2></header><div class="modal-body"><ul class="list-unstyled colcount-xs-2"><li><a href="https://bitly.com/a/bitmarklet?u=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html" class="shr-lnk bitly btn btn-default" target="_blank">bitly</a></li><li><a href="http://www.blogger.com/blog_this.pyra?t=&amp;u=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;n=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk blogger btn btn-default" target="_blank">Blogger</a></li><li><a href="http://digg.com/submit?phase=2&amp;url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;title=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk digg btn btn-default" target="_blank">Digg</a></li><li><a href="http://www.diigo.com/post?url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;title=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk diigo btn btn-default" target="_blank">Diigo</a></li><li><a href="mailto:?to=&amp;subject=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada&amp;body=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html%0A" class="shr-lnk email btn btn-default" target="_blank">Email</a></li><li><a href="http://www.facebook.com/sharer.php?u=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;t=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk facebook btn btn-default" target="_blank">Facebook</a></li><li><a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;tf=1&amp;to=&amp;su=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada&amp;body=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html%0A" class="shr-lnk gmail btn btn-default" target="_blank">Gmail</a></li><li><a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;title=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada&amp;ro=false&amp;summary=&amp;source=" class="shr-lnk linkedin btn btn-default" target="_blank">LinkedIn®</a></li><li><a href="http://www.myspace.com/Modules/PostTo/Pages/?u=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;t=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk myspace btn btn-default" target="_blank">MySpace</a></li><li><a href="http://www.pinterest.com/pin/create/button/?url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;media=&amp;description=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk pinterest btn btn-default" target="_blank">Pinterest</a></li><li><a href="http://reddit.com/submit?url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;title=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada" class="shr-lnk reddit btn btn-default" target="_blank">reddit</a></li><li><a href="http://www.tumblr.com/share/link?url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html&amp;name=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada&amp;description=" class="shr-lnk tumblr btn btn-default" target="_blank">tumblr</a></li><li><a href="https://twitter.com/intent/tweet?text=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada&amp;url=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html" class="shr-lnk twitter btn btn-default" target="_blank">Twitter</a></li><li><a href="http://compose.mail.yahoo.com/?to=&amp;subject=CSV%20Format%20Description%20-%20Water%20Level%20and%20Flow%20-%20Environment%20Canada&amp;body=https%3A%2F%2Fwateroffice.ec.gc.ca%2Fdownload%2Fcsv_help_e.html%0A" class="shr-lnk yahoomail btn btn-default" target="_blank">Yahoo! Mail</a></li></ul><p class="col-sm-12 shr-dscl">No endorsement of any products or services is expressed or implied.</p><div class="clearfix"></div></div></section><a href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#shr-pg0" aria-controls="shr-pg0" class="shr-opn wb-lbx btn btn-default btn-block wb-lbx-inited wb-init" id="wb-auto-5"><span class="glyphicon glyphicon-share"></span>Share this page</a></div>
+</div>
+<dl id="wb-dtmd">
+<dt>Date modified: </dt>
+<dd><time property="dateModified">2023-02-02</time></dd>
+</dl>
+</div>
+</section></main>
+<footer id="wb-info">
+<div class="landscape">
+<nav class="container wb-navcurr">
+<h2 class="wb-inv">About government</h2>
+<ul class="list-unstyled colcount-sm-2 colcount-md-3">
+<li><a href="https://wateroffice.ec.gc.ca/contactus/contact_us_e.html">Contact us</a></li>
+<li><a href="https://www.canada.ca/en/government/dept.html">Departments and agencies</a></li>
+<li><a href="https://www.canada.ca/en/government/publicservice.html">Public service and military</a></li>
+<li><a href="https://www.canada.ca/en/news.html">News</a></li>
+<li><a href="https://www.canada.ca/en/government/system/laws.html">Treaties, laws and regulations</a></li>
+<li><a href="https://www.canada.ca/en/transparency/reporting.html">Government-wide reporting</a></li>
+<li><a href="https://pm.gc.ca/eng">Prime Minister</a></li>
+<li><a href="https://www.canada.ca/en/government/system.html">How government works</a></li>
+<li><a href="https://open.canada.ca/en/">Open government</a></li>
+</ul>
+</nav>
+</div>
+<div class="brand">
+<div class="container">
+<div class="row">
+<nav class="col-md-9 col-lg-10 ftr-urlt-lnk">
+<h2 class="wb-inv">About this site</h2>
+<ul>
+<li><a href="https://www.canada.ca/en/social.html">Social media</a></li>
+<li><a href="https://www.canada.ca/en/mobile.html">Mobile applications</a></li>
+<li><a href="https://www1.canada.ca/en/newsite.html">About Canada.ca</a></li>
+<li><a href="https://www.canada.ca/en/transparency/terms.html">Terms and conditions</a></li>
+<li><a href="https://www.canada.ca/en/transparency/privacy.html">Privacy</a></li>
+</ul>
+</nav>
+<div class="col-xs-6 visible-sm visible-xs tofpg">
+<a href="https://wateroffice.ec.gc.ca/download/csv_help_e.html#wb-cont">Top of Page <span class="glyphicon glyphicon-chevron-up"></span></a>
+</div>
+<div class="col-xs-6 col-md-3 col-lg-2 text-right">
+<img src="./Data_Dictionary_fraser_river_flow_files/wmms-blk.svg" alt="Symbol of the Government of Canada">
+</div>
+</div>
+</div>
+</div>
+</footer>
+<!--[if gte IE 9 | !IE ]><!-->
+<script src="./Data_Dictionary_fraser_river_flow_files/jquery.js.download"></script>
+<script src="./Data_Dictionary_fraser_river_flow_files/wet-boew.min.js.download"></script><span id="wb-rsz" class="wb-init">&nbsp;</span>
+<!--<![endif]-->
+<!--[if lt IE 9]>
+		<script src="/vendor/wet/v5.1.0/wet-boew/js/ie8-wet-boew2.min.js"></script>
+		<![endif]-->
+<script src="./Data_Dictionary_fraser_river_flow_files/theme.min.js.download"></script>
+<script src="./Data_Dictionary_fraser_river_flow_files/moment.js.download"></script>
+<script src="./Data_Dictionary_fraser_river_flow_files/translations.js.download"></script>
+<script src="./Data_Dictionary_fraser_river_flow_files/application.js.download"></script>
+
+
+</body></html>
