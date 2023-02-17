@@ -44,3 +44,36 @@ sandheads <- sandheads[,c(3,4,6,7,8,10,16,18)] %>%
 
 # Export
 write.csv(sandheads, file = "data/Sandheads_wind_20230215.csv", row.names = FALSE)
+
+
+# # Visualize wind data
+# library(lubridate)
+# # Select and revise column names
+# sandheads <- sandheads[,c(3,4,6,7,8,10,16,18)] %>% 
+#   rename(Temperature.C = `Temp...C.`, 
+#          Wind.Direction.10s.deg = `Wind.Dir..10s.deg.`,
+#          Wind.Speed.km.h = `Wind.Spd..km.h.`) %>% 
+#   # Arrange by date
+#   arrange(Day, Month, Year) %>% 
+#   # Convert wind speed to m/s
+#   mutate(Wind.Speed.m.s = Wind.Speed.km.h / 3.6) %>% 
+#   # Calculate wind stress (kg m-2 s-1)
+#   # windstress = density of air (1.22 kg m-3) * wind-drag coefficient (0.0013) * wind sped (m s-1)
+#   mutate(Wind.Stress = 1.22 * 0.0013 * Wind.Speed.m.s) %>% 
+#   # Calculate daily means, then monthly means
+#   group_by(Station.Name, Climate.ID, Year, Month, Day) %>% 
+#   summarise(across(everything(), ~mean(.x, na.rm = TRUE)), .groups = 'drop')
+# 
+# sandheads <- sandheads %>% 
+#   mutate(Date = as_date(paste0(Year,"-",Month,"-",Day)))
+# 
+# ggplot(sandheads, aes(x = Date, y = Wind.Speed.m.s)) +
+#   geom_point(aes(color = Month)) +
+#   geom_smooth(model = "loess") +
+#   scale_color_viridis_c() +
+#   facet_wrap(~Month, nrow = 1) +
+#   scale_x_date(date_labels = "%Y") +
+#   ylab("Daily average wind speed (m/s)") +
+#   theme(legend.position = "none",
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
