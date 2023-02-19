@@ -21,7 +21,7 @@ theme_set(theme_bw())
 set_here(path = "..")
 
 # Taxonomy list for matching with trait dataset
-taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20221122.xlsx"))
+taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20230207.xlsx"))
 
 # Load net metadata 
 load(here("data/net_metadata.RData"))
