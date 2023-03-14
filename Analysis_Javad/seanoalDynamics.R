@@ -115,6 +115,23 @@ ggplot (data = zoop.SOG.sizeclass2 %>%  filter (Year > 2014), aes(x = factor(Mon
 
 # making a zoop abundance file that has traits
 
-zoop.SOG.traits <- zoop.SOG %>% left_join(
-  traits.lvl2 %>% select (traitName, traitValue, scientificName) %>%  pivot_wider( names_from = traitName, values_from = traitValue) %>% unique()
+zoop.SOG.traits <- zoop.SOG %>% 
+  left_join(
+  traits.lvl2 %>% select (traitName, traitValue, scientificName) %>%  
+    pivot_wider( names_from = traitName, values_from = traitValue) %>% unique()
 )
+
+
+
+# left join one trait
+traits.lvl2.sub <- traits.lvl2 %>% 
+  filter(traitName == "carbonWeight") %>% 
+  mutate(traitValue = as.numeric(traitValue)) %>% 
+  select (traitName, traitValue, scientificName) 
+
+
+zoop.SOG.traits_carbon <- zoop.SOG %>% 
+  left_join(traits.lvl2.sub)
+  
+
+
