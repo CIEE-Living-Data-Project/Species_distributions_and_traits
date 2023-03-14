@@ -1,0 +1,2 @@
+load("/Users/ericafellin/Documents/GitHub/Species_distributions_and_traits/data/zooplankton_traits-2023-02-12.RData")
+load("/Users/ericafellin/Documents/GitHub/Species_distributions_and_traits/data/SOG_satellite_chl_19972022.RData")
