@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(here)
 source(here("functions/R_package_check.R"))
 prepareLibrary()
-source(here("functions/QOL_toolkit.R"))
+source(here("functions/toolkit.R"))
 
 theme_set(theme_bw())
 set_here(path = "..")
@@ -22,11 +22,15 @@ set_here(path = "..")
 # Load trait dataset metadata tables
 directory.trait <- openxlsx::read.xlsx(here("tables/trait_directory_20230207.xlsx"))
 directory.lifestage <- openxlsx::read.xlsx(here("tables/lifestage_directory_20230207.xlsx"))
-taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20230207.xlsx"))
-dataset.format <- openxlsx::read.xlsx(here("tables/trait_dataset_standard_format_20230118.xlsx"))[-1,]
+taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20230316.xlsx"))
+dataset.format <- openxlsx::read.xlsx(here("tables/trait_dataset_standard_format_20230403.xlsx"))[-1,]
 
 # Load the trait dataset
-load(here("data/zooplankton_traits-2023-02-12.RData"))
+# # Load Level 1 dataset
+# load("data/Trait_dataset_level1/trait_dataset_level1-2023-04-06.RData")
+
+# Load Level 2 dataset
+load("data/Trait_dataset_level2/trait_dataset_level2-2023-04-06.RData")
 ```
 
 
