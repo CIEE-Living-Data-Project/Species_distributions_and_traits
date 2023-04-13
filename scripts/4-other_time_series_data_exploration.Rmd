@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(here)
 source(here("functions/R_package_check.R"))
 prepareLibrary()
-source(here("functions/QOL_toolkit.R"))
+source(here("functions/toolkit.R"))
 source(here("functions/getClimateIndices.R"))
 
 theme_set(theme_bw())
