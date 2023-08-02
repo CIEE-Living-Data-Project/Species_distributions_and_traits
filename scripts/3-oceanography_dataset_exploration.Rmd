@@ -16,15 +16,14 @@ library(here)
 source(here("functions/R_package_check.R"))
 prepareLibrary()
 source(here("functions/toolkit.R"))
+source(here("functions/getClimateIndices.R"))
 
 theme_set(theme_bw())
 set_here(path = "..")
 
-# Taxonomy list for matching with trait dataset
-taxonomy <- openxlsx::read.xlsx(here("tables/taxonomy_table_20230207.xlsx"))
-
 # Load net metadata 
-load(here("data/net_metadata.RData"))
+load(here("data/curated_zoop_distribution_20230801.RData"))
+rm(zoop.SOG, sp.list)
 
 # Load SOG physics data
 load( here("data/SOG_physics_data_2023_01_10.RData"))
@@ -32,12 +31,34 @@ load( here("data/SOG_physics_data_2023_01_10.RData"))
 # Load the satellite data
 load(here("data/SOG_satellite_chl_19972022.RData"))
 
-# PolySet data frames for mapping the Strait of Georgia from the PBSmapping package
-data(nepacLL)
-data(nepacLLhigh) #higher resolution maps
-colnames(nepacLLhigh) <- c("group", "POS", "lon", "lat") # rename columns
-colnames(nepacLL) <- c("group", "POS", "lon", "lat")
 ```
+
+# Create sample x environmental variables matrix
+```{r}
+# Extract global climate indices
+climate <- getClimateIndices(index = c("PDO","NPGO","MEI"), 
+                             year.s = 1995, year.e = 2020) %>% 
+  mutate(Index = toupper(Index)) %>% 
+  pivot_wider(names_from = Index, values_from = Value)
+
+# Match environmental data with the net metadata
+zoop.SOG.envi <- zoop.SOG.meta %>% 
+  select(NetKey, Longitude, Latitude, Year, Month, Day, 
+         Depth = `Bottom_depth(m)`) %>% 
+  # Add CTD data (for 530 of the samples). There are not enough chemistry data to match each sample. For the CTD data, select the surface (0-10m) and net depth (0-net tow depth) averages temperature, salinity, and density values.
+  left_join(select(physics.ctd, NetKey, TempI10, TempINet, SaliI10, SaliINet,
+                   DensI10, DensINet), by = "NetKey") %>% 
+  # Add climate information
+  left_join(climate, by = join_by(Year,Month))
+
+
+
+
+# TODO depending on the spatial and temporal resolution of the analysis, the CTD, satellite, Fraser discharge, and lighthouse data can be averaged first before matching with the net data.
+
+```
+
+
 
 # Distribution of CTD samples
 
@@ -56,6 +77,12 @@ colnames(physics.ctd)
 Plot the distribution of CTD samples:
 
 ```{r}
+# PolySet data frames for mapping the Strait of Georgia from the PBSmapping package
+data(nepacLL)
+data(nepacLLhigh) #higher resolution maps
+colnames(nepacLLhigh) <- c("group", "POS", "lon", "lat") # rename columns
+colnames(nepacLL) <- c("group", "POS", "lon", "lat")
+
 # Subset columns with CTD data
 ctd.SOG <- physics.meta %>% 
   filter(!is.na(CTDKey))
