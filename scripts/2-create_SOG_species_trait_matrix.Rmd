@@ -1,0 +1,587 @@
+---
+title: "Create species trait matrix"
+author: "Patrick Pata"
+date: '2023-08-01'
+output: html_document
+---
+
+This file, the curated species list for the Strait of Georgia zooplankton is loaded and matchd with the level 3 zooplankton trait database. Generalizations are then made at different taxonomic levels to fill in the gaps.
+
+Set trait value confidence scores: 0 - species level, 1 - calculated from regression, 2 - genus generalization from SOG species, 3 - genus generalization from global species pool, 4 - family generalization from SOG species, 5 - family generalization from global species pool, 6 - order generalization from SOG species, 7 - order generalization from global species pool, 8 - class generalization from SOG species, 9 - class generalization from global species pool
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load libraries and data
+```{r}
+library(tidyverse)
+library(here)
+library(lubridate)
+set_here(path = "..")
+`%notin%` <- Negate(`%in%`)
+
+# Community distribution data
+load(here("data/curated_zoop_distribution_20230801.RData"))
+rm(zoop.SOG, zoop.SOG.meta)
+
+# Trait data (Use level 3)
+load(here("data/trait_dataset_level3-2023-07-25.RData"))
+
+# Trait directory
+trait.directory <- read.csv(here("tables/trait_directory_20230628.csv")) %>% 
+  distinct(traitName, traitUnit, valueType)
+```
+
+# Curate the trait dataset
+Only include records at the species level and select traits of interest
+```{r}
+# Determine traits of interest
+trait.list <- data.frame(traitName = c("bodyLengthMax","carbonWeight","dryWeight","wetWeight",
+                "nitrogenTotal","nitrogenPDW","phosphorusTotal","phosphorusPDW",
+                "ratioCN","ratioCP","ratioNP",
+                "respirationRate_15C","respirationRate_WSC_15C",
+                "excretionRateN_15C","excretionRateN_WSDW_15C",
+                "excretionRateP_15C","excretionRateP_WSDW_15C",
+                # Categorical traits
+                "feedingMode","reproductionMode","trophicGroup",
+                # Binary versions of categorical traits
+                "RM.broadcasting","RM.brooding",
+                "TG.carnivore","TG.omnivore","TG.herbivore","TG.detritivore",
+                "FM.active.ambush","FM.passive.ambush","FM.cruise","FM.current",
+                "FM.particle.feeder","FM.parasite","FM.commensal")) %>% 
+  left_join(trait.directory, by = "traitName")
+
+
+traits.subset <- traits.lvl3 %>% 
+  filter(taxonRank %in% c("Species","Subspecies")) %>% 
+  filter(traitName %in% trait.list$traitName) %>% 
+  # Combine FM commensal + parasite
+  mutate(traitName = if_else(traitName %in% c("FM.commensal","FM.parasite"),
+                             "FM.commensal.parasite", traitName)) %>% 
+  distinct(taxonID, traitName, traitValue, valueConf,
+           phylum, class, order, family, genus, scientificName) %>% 
+  rename(Phylum = phylum, Class = class, Order = order,
+         Family = family, Genus = genus) %>% 
+  left_join(trait.directory, by = "traitName")
+
+# For taxa at species level, extract trait values
+traits.SOG <- sp.list %>% 
+  select(taxonID, scientificName, taxonRank, majorgroup) %>% 
+  left_join(traits.subset, multiple = "all",
+            by = join_by(taxonID, scientificName))
+
+```
+
+# Get a list of BC species with missing trait information
+```{r}
+traits.missing <- cross_join(sp.list, trait.list) %>% 
+  # Index each unique Species-Trait pair
+  mutate(taxonTrait = row_number()) %>% 
+  relocate(taxonTrait) %>% 
+  # Identify SOG species with trait data
+  left_join(distinct(traits.SOG, taxonID, traitName, valueConf),
+            multiple = "all",
+            by = join_by(taxonID, traitName)) %>% 
+  # Select rows with missing trait data
+  filter(is.na(valueConf)) 
+```
+
+# Numerical: Estimate group level values of SOG species
+```{r}
+# Get a list of missing trait information
+missing.num <- traits.missing %>% 
+  filter(valueType == "numeric")
+
+
+# 1. Genus level
+gen.est <- missing.num %>% 
+  distinct(Genus, traitName) %>% 
+  left_join(select(traits.subset, Genus, traitName, taxonID, traitValue),
+            multiple = "all", by = join_by(Genus, traitName)) %>% 
+  filter(!is.na(traitValue))
+
+gen.est.bc <- gen.est %>% 
+  filter(taxonID %in% sp.list$taxonID) %>% 
+  mutate(valueConf = 2) 
+
+gen.est.all <- gen.est %>% 
+  # but remove taxa already in gen.est.bc
+  left_join(distinct(gen.est.bc, Genus, traitName, valueConf),
+            by = join_by(Genus, traitName)) %>% 
+  filter(is.na(valueConf)) %>% 
+  mutate(valueConf = 3)
+
+# Combine both data frames and add species the groups correspond to
+gen.est <- bind_rows(gen.est.bc, gen.est.all) %>% 
+  # Average
+  mutate(traitValue = as.numeric(traitValue)) %>% 
+  group_by(Genus, traitName, valueConf) %>% 
+  summarise(ntaxa = n(),
+            traitValue.sd = sd(traitValue),
+            traitValue = mean(traitValue), .groups = "drop") %>% 
+  # Link to BC taxa names
+  left_join(distinct(missing.num, Genus, traitName, taxonTrait, taxonID, scientificName),
+            by = join_by(Genus, traitName))
+
+# 2. Family level
+missing.num.2 <- missing.num %>%
+  filter(taxonTrait %notin% gen.est$taxonTrait)
+ 
+fam.est <- missing.num.2 %>% 
+  distinct(Family, traitName) %>% 
+  left_join(select(traits.subset, Family, traitName, taxonID, traitValue),
+            multiple = "all", by = join_by(Family, traitName)) %>% 
+  filter(!is.na(traitValue))
+
+fam.est.bc <- fam.est %>% 
+  filter(taxonID %in% sp.list$taxonID) %>% 
+  mutate(valueConf = 4) 
+
+fam.est.all <- fam.est %>% 
+  # but remove taxa already in fam.est.bc
+  left_join(distinct(fam.est.bc, Family, traitName, valueConf),
+            by = join_by(Family, traitName)) %>% 
+  filter(is.na(valueConf)) %>% 
+  mutate(valueConf = 5)
+
+# Combine both data frames and add species the groups correspond to
+fam.est <- bind_rows(fam.est.bc, fam.est.all) %>% 
+  # Average
+  mutate(traitValue = as.numeric(traitValue)) %>% 
+  group_by(Family, traitName, valueConf) %>% 
+  summarise(ntaxa = n(),
+            traitValue.sd = sd(traitValue),
+            traitValue = mean(traitValue), .groups = "drop") %>% 
+  # Link to BC taxa names
+  left_join(distinct(missing.num.2, Family, traitName, 
+                     taxonTrait, taxonID, scientificName))
+
+
+# 3. Order level
+missing.num.3 <- missing.num.2 %>%
+  filter(taxonTrait %notin% fam.est$taxonTrait)
+
+ 
+ord.est <- missing.num.3 %>% 
+  distinct(Order, traitName) %>% 
+  left_join(select(traits.subset, Order, traitName, taxonID, traitValue),
+            multiple = "all", by = join_by(Order, traitName)) %>% 
+  filter(!is.na(traitValue))
+
+ord.est.bc <- ord.est %>% 
+  filter(taxonID %in% sp.list$taxonID) %>% 
+  mutate(valueConf = 6) 
+
+ord.est.all <- ord.est %>% 
+  filter(taxonID %notin% sp.list$taxonID) %>% 
+  # but remove taxa already in ord.est.bc
+  left_join(distinct(ord.est.bc, Order, traitName, valueConf),
+            by = join_by(Order, traitName)) %>% 
+  filter(is.na(valueConf)) %>% 
+  mutate(valueConf = 7)
+
+# Combine both data frames and add species the groups correspond to
+ord.est <- bind_rows(ord.est.bc, ord.est.all) %>% 
+   # Average
+  mutate(traitValue = as.numeric(traitValue)) %>% 
+  group_by(Order, traitName, valueConf) %>% 
+  summarise(ntaxa = n(),
+            traitValue.sd = sd(traitValue),
+            traitValue = mean(traitValue), .groups = "drop") %>% 
+  # Link to BC taxa names
+  left_join(distinct(missing.num.3, Order, traitName,
+                     taxonTrait, taxonID, scientificName))
+
+
+# 4. Class level 
+missing.num.4 <- missing.num.3 %>%
+  filter(taxonTrait %notin% ord.est$taxonTrait)
+
+class.est <- missing.num.4 %>% 
+  distinct(Class, traitName) %>% 
+  left_join(select(traits.subset, Class, traitName, taxonID, traitValue),
+            multiple = "all", by = join_by(Class, traitName)) %>% 
+  filter(!is.na(traitValue))
+
+class.est.bc <- class.est %>% 
+  filter(taxonID %in% sp.list$taxonID) %>% 
+  mutate(valueConf = 8) 
+
+class.est.all <- class.est %>% 
+  filter(taxonID %notin% sp.list$taxonID) %>% 
+  # but remove taxa already in Class.est.bc
+  left_join(distinct(class.est.bc, Class, traitName, valueConf),
+            by = join_by(Class, traitName)) %>% 
+  filter(is.na(valueConf)) %>% 
+  mutate(valueConf = 9)
+
+# Combine both data frames and add species the groups correspond to
+class.est <- bind_rows(class.est.bc, class.est.all) %>% 
+   # Average
+  mutate(traitValue = as.numeric(traitValue)) %>% 
+  group_by(Class, traitName, valueConf) %>% 
+  summarise(ntaxa = n(),
+            traitValue.sd = sd(traitValue),
+            traitValue = mean(traitValue), .groups = "drop") %>% 
+  # Link to BC taxa names
+  left_join(distinct(missing.num.3, Class, traitName,
+                     taxonTrait, taxonID, scientificName))
+
+missing.num.5 <- missing.num.4 %>%
+  filter(taxonTrait %notin% class.est$taxonTrait)
+
+# Combine all estimates and average trait values at the "Species" (BC taxa) level
+group.estimate <- bind_rows(gen.est, fam.est, ord.est, class.est) %>% 
+  select(-c(Genus, Family, Order, taxonTrait)) %>% 
+  arrange(traitName, scientificName) %>%
+  # Resolve repeated traitValues: For instances when a trait is generalized at different levels, choose the lower valueConf
+  arrange(valueConf) %>% 
+  group_by(scientificName, traitName) %>% 
+  filter(row_number() == 1) %>% 
+  ungroup()
+  
+
+# Combine level 3 + estimates dataframes
+# Average the trait values for taxa represented by multiple species
+traits.SOG.num <- traits.SOG %>% 
+  filter(valueType %in% c("numeric"))  %>% 
+  mutate(traitValue = as.numeric(traitValue)) %>% 
+  # Add the estimated trait data for BC
+  bind_rows(group.estimate) %>% 
+  select(taxonID, scientificName, traitName, traitValue, valueConf, 
+         ntaxa, traitValue.sd)
+
+
+# still.missing.num <- missing.num.3 %>%
+#   filter(taxonTrait %notin% ord.est$taxonTrait) %>% 
+#   distinct(Species, traitName, .keep_all = TRUE)
+# 
+# 
+# # For still missing, apply major group level traits
+# BB <- traits.bc.num %>% 
+#   left_join(distinct(bc.species.list, Species, majorgroup), by = "Species") %>% 
+#   group_by(traitName, majorgroup) %>% 
+#   summarise(traitValue.sd = sd(traitValue),
+#             ntaxa = n(),
+#             traitValue = mean(traitValue), .groups = "drop")
+# 
+# mgroup.estimate <- still.missing.num %>% 
+#   left_join(BB, by = join_by(traitName, majorgroup)) %>% 
+#   mutate(valueConf = 8) %>% 
+#   select(colnames(traits.bc.num)) 
+# 
+# still.missing.num <- mgroup.estimate %>% 
+#   filter(is.na(traitValue))
+# 
+# mgroup.estimate <- mgroup.estimate %>% 
+#   filter(!is.na(traitValue))
+# 
+# traits.bc.num <- traits.bc.num %>% 
+#   bind_rows(mgroup.estimate)
+
+
+rm(gen.est, gen.est.bc, gen.est.all, missing.num.2,
+   fam.est, fam.est.bc, fam.est.all, missing.num.3,
+   ord.est, ord.est.bc, ord.est.all, missing.num.4,
+   class.est, class.est.bc, class.est.all, # missing.num.5,
+   group.estimate, missing.num)
+
+```
+
+# Categorical/binary: Estimate group level values BC species
+The level 3 data has already been generalized at the genus level. Here we will generalize at the family or order levels.
+
+Apply generalization to categorical levels
+```{r}
+# 0. The level 3 BC categorical data
+traits.bin <- traits.subset %>% # consider the global database as source
+  filter(traitName %in% trait.list$traitName) %>% 
+  filter(valueType == "binary") %>% 
+  mutate(traitValue = as.numeric(traitValue)) 
+
+
+# 1. Get a list of missing trait information
+missing.cat <- traits.missing %>% 
+  filter(valueType == "categorical") %>% 
+  arrange(traitName)
+
+
+# 2.1 Generalize reproduction mode at family level. 
+family.bin.rm <- traits.bin %>% 
+  filter(grepl("RM.",traitName)) %>% 
+  # group at a taxonomic level
+  group_by(Family, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Family) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+    
+missing.cat.rm.fam <- missing.cat %>% 
+  filter(traitName %in% c("reproductionMode")) %>% 
+  distinct(scientificName, taxonID, Family) %>% 
+  left_join(family.bin.rm, by = "Family") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 5)
+
+# 2.2 Generalize reproduction mode at order level
+order.bin.rm <- traits.bin %>% 
+  filter(grepl("RM.",traitName)) %>% 
+  # group at a taxonomic level
+  group_by(Order, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Order) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+
+missing.cat.rm.ord <- missing.cat %>% 
+  filter(traitName %in% c("reproductionMode")) %>% 
+  distinct(scientificName, taxonID, Order) %>% 
+  filter(scientificName %notin% missing.cat.rm.fam$scientificName) %>% 
+  left_join(order.bin.rm, by = "Order") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 7)
+
+# 2.3 Generalize reproduction mode at class level
+class.bin.rm <- traits.bin %>% 
+  filter(grepl("RM.",traitName)) %>% 
+  # group at a taxonomic level
+  group_by(Class, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Class) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa) %>% 
+  # dont apply to copepoda
+  filter(Class != "Copepoda")
+
+missing.cat.rm.class <- missing.cat %>% 
+  filter(traitName %in% c("reproductionMode")) %>% 
+  distinct(scientificName, taxonID, Class) %>% 
+  filter(scientificName %notin% missing.cat.rm.ord$scientificName) %>% 
+  left_join(class.bin.rm, by = "Class") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 9)
+
+# for Beroe, set RM to broadcasting (for ctenophores)
+missing.cat.rm.beroe <- missing.cat %>% 
+  filter(traitName %in% c("reproductionMode")) %>% 
+  filter(scientificName %in% c("Beroe","Beroe abyssicola","Beroe cucumis")) %>% 
+  mutate(traitName = "RM.broadcasting", traitValue = 1) %>% 
+  mutate(valueConf = 9) %>% 
+  select(colnames(missing.cat.rm.class))
+
+
+
+# 3.1 Generalize trophic group at family level. 
+family.bin.tg <- traits.bin %>% 
+  filter(grepl("TG.",traitName)) %>% 
+  # group at a taxonomic level
+  group_by(Family, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Family) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+    
+missing.cat.tg.fam <- missing.cat %>% 
+  filter(traitName %in% c("trophicGroup")) %>% 
+  distinct(scientificName, taxonID, Family) %>% 
+  left_join(family.bin.tg, by = "Family") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 5)
+
+# 3.2 Generalize vertical distribution at order level
+order.bin.tg <- traits.bin %>% 
+  filter(grepl("TG.",traitName)) %>% 
+  # group at a taxonomic level
+  group_by(Order, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Order) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+
+missing.cat.tg.ord <- missing.cat %>% 
+  filter(traitName %in% c("trophicGroup")) %>% 
+  distinct(scientificName, taxonID, Order) %>% 
+  filter(scientificName %notin% missing.cat.tg.fam$scientificName) %>% 
+  left_join(order.bin.tg, by = "Order") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 7)
+
+# 3.3 Generalize vertical distribution at class level
+class.bin.tg <- traits.bin %>% 
+  filter(grepl("TG.",traitName)) %>% 
+  # group at a taxonomic level
+  group_by(Class, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Class) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+
+missing.cat.tg.class <- missing.cat %>% 
+  filter(traitName %in% c("trophicGroup")) %>% 
+  distinct(scientificName, taxonID, Class) %>% 
+  filter(scientificName %notin% missing.cat.tg.ord$scientificName) %>% 
+  left_join(class.bin.tg, by = "Class") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 9)
+
+
+
+# 4.1 Generalize feeding mode (detailed) at family level. 
+family.bin.fm1 <- traits.bin %>% 
+  filter(traitName %in% c("FM.passive.ambush", "FM.active.ambush",
+                          "FM.cruise", "FM.current",
+                          "FM.particle.feeder", "FM.commensal.parasite")) %>% 
+  # group at a taxonomic level
+  group_by(Family, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Family) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+    
+missing.cat.fm1.fam <- missing.cat %>% 
+  filter(traitName %in% c("feedingMode")) %>% 
+  distinct(scientificName, taxonID, Family) %>% 
+  left_join(family.bin.fm1, by = "Family") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 5)
+
+
+# 4.2 Generalize feeding mode (detailed)  at order level
+order.bin.fm1 <- traits.bin %>% 
+  filter(traitName %in% c("FM.passive.ambush", "FM.active.ambush",
+                          "FM.cruise", "FM.current",
+                          "FM.particle.feeder", "FM.commensal.parasite")) %>% 
+  # group at a taxonomic level
+  group_by(Order, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Order) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+
+missing.cat.fm1.ord <- missing.cat %>% 
+  filter(traitName %in% c("feedingMode")) %>% 
+  distinct(scientificName, taxonID, Order) %>% 
+  filter(scientificName %notin% missing.cat.fm1.fam$scientificName) %>% 
+  left_join(order.bin.fm1, by = "Order") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 7)
+
+# 4.3 Generalize feeding mode (detailed)at class level
+class.bin.fm1 <- traits.bin %>% 
+  filter(traitName %in% c("FM.passive.ambush", "FM.active.ambush",
+                          "FM.cruise", "FM.current",
+                          "FM.particle.feeder", "FM.commensal.parasite")) %>% 
+  # group at a taxonomic level
+  group_by(Class, traitName) %>% 
+  summarise(traitValue = sum(traitValue),  
+            .groups = "drop") %>% 
+  group_by(Class) %>% 
+  mutate(ntaxa = sum(traitValue)) %>% 
+  ungroup() %>% 
+  # convert to proportions
+  mutate(traitValue = traitValue / ntaxa)
+
+missing.cat.fm1.class <- missing.cat %>% 
+  filter(traitName %in% c("feedingMode")) %>% 
+  distinct(scientificName, taxonID, Class) %>% 
+  filter(scientificName %notin% missing.cat.fm1.ord$scientificName) %>% 
+  left_join(class.bin.fm1, by = "Class") %>% 
+  filter(!is.na(traitValue)) %>% 
+  select(-ntaxa) %>% 
+  mutate(valueConf = 9)
+
+
+group.estimate.bin <- bind_rows(missing.cat.rm.fam, missing.cat.rm.ord,
+                                missing.cat.tg.fam, missing.cat.tg.ord,
+                                missing.cat.fm1.fam, missing.cat.fm1.ord,
+                                missing.cat.rm.class, missing.cat.tg.class,
+                                missing.cat.fm1.class,missing.cat.rm.beroe) %>% 
+  select(-c(Family, Order, Class))
+    
+
+# Merge literature and estimated binary values
+traits.SOG.bin <- traits.SOG %>% 
+  filter(traitName %in% traits.bin$traitName) %>% 
+  filter(scientificName %in% sp.list$scientificName) %>% 
+  select(colnames(group.estimate.bin)) %>% 
+  bind_rows(group.estimate.bin) %>% 
+  # for taxa estimated at different levels, choose lower valueConf
+  arrange(valueConf) %>% 
+  group_by(taxonID, scientificName, traitName) %>% 
+  filter(row_number() == 1) %>% 
+  ungroup() 
+
+# # Check still missing
+# AA <- group.estimate.bin %>%
+#   mutate(traitName = if_else(grepl("RM.",traitName),
+#                              "reproductionMode", traitName)) %>%
+#   mutate(traitName = if_else(grepl("FM",traitName),
+#                              "feedingMode", traitName)) %>%
+#   mutate(traitName = if_else(grepl("TG.",traitName),
+#                              "trophicGroup", traitName)) %>%
+#   distinct(scientificName, traitName, valueConf)
+# still.missing.cat <- missing.cat %>%
+#   select(-valueConf) %>%
+#   left_join(AA, by = join_by(scientificName, traitName)) %>%
+#   filter(is.na(valueConf))
+
+```
+
+# Combine numeric and binary traits
+*NOTE* The numeric data still has a few blanks.
+```{r}
+# Long format
+traits.SOG <- bind_rows(traits.SOG.num, traits.SOG.bin)
+
+# Species x traits table. For binary data, the blanks are 0
+traits.SOG.num.mat <- traits.SOG.num %>% 
+  select(scientificName, traitName, traitValue) %>% 
+  pivot_wider(names_from = "traitName", values_from = "traitValue")
+traits.SOG.bin.mat <- traits.SOG.bin %>% 
+  select(scientificName, traitName, traitValue) %>% 
+  pivot_wider(names_from = "traitName", values_from = "traitValue",
+              values_fill = 0)
+```
+
+
+# Export data
+```{r}
+save(traits.SOG, traits.SOG.num.mat, traits.SOG.bin.mat, trait.list,
+     file = here(paste0("data/curated_species_trait_matrices_20230801.RData")))
+```
+
+

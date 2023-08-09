@@ -1,0 +1,11 @@
+COLUMN / COLONNE,DESCRIPTION / DESCRIPTION,UNITS / UNITÉS
+SubsiteID / IDSous-site,Site identifier / Identifiant du site,
+FirstDocumented / PremièreDocumentée,Year that seals were first documented at site on survey / Année à laquelle les phoques ont été documentés pour la première fois sur le site lors de l'enquête,
+Region / Région,Generalized region of site within coastal BC / Région généralisée du site sur la côte de la Colombie-Britannique,
+Complex / Complexe,Name assigned to site or cluster of sites (typically <= 1km from each other) / Nom attribué au site ou au groupe de sites (généralement <= 1 km l'un de l'autre),
+Subarea / Sous-zone,Generalized area of site within a region / Superficie généralisée du site dans une région,
+Year / Année,Year seals documented at site / Année où les phoques ont été documentés sur le site,
+Date / Date,Date seals documented at site / Date à laquelle les phoques ont été documentés sur le site,
+Longitude / Longitude,Site longitude / Longitude du site,"decimal degrees, WGS84 / degrés décimaux WGS84"
+Latitude / Latitude,Site latitude / Latitude du site,"decimal degrees, WGS84 / degrés décimaux WGS84"
+complex_count / complexe_dénombrements,Raw number of seals observed at site / Nombre brut de phoques observés sur le site,
