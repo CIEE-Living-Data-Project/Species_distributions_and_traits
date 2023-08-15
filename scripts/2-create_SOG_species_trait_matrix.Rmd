@@ -27,7 +27,7 @@ load(here("data/curated_zoop_distribution_20230801.RData"))
 rm(zoop.SOG, zoop.SOG.meta)
 
 # Trait data (Use level 3)
-load(here("data/trait_dataset_level3-2023-07-25.RData"))
+load(here("data/trait_dataset_level3-2023-08-11.RData"))
 
 # Trait directory
 trait.directory <- read.csv(here("tables/trait_directory_20230628.csv")) %>% 
@@ -538,12 +538,22 @@ traits.SOG.bin <- traits.SOG %>%
   filter(traitName %in% traits.bin$traitName) %>% 
   filter(scientificName %in% sp.list$scientificName) %>% 
   select(colnames(group.estimate.bin)) %>% 
+  mutate(traitValue = as.numeric(traitValue)) %>% 
   bind_rows(group.estimate.bin) %>% 
   # for taxa estimated at different levels, choose lower valueConf
   arrange(valueConf) %>% 
   group_by(taxonID, scientificName, traitName) %>% 
   filter(row_number() == 1) %>% 
-  ungroup() 
+  ungroup() %>% 
+  # For estimated binary trait value <0.25, consider this as 0
+  mutate(traitValue = if_else(traitValue <0.25, 0, traitValue)) %>% 
+  # Make sure that the sum proportion of fuzzy coded traits = 1
+  mutate(trait = sub("\\..*", "", traitName)) %>% 
+  group_by(scientificName, trait) %>% 
+  mutate(traitValue = traitValue / sum(traitValue)) %>% 
+  ungroup() %>% 
+  select(-trait)
+
 
 # # Check still missing
 # AA <- group.estimate.bin %>%
@@ -581,7 +591,7 @@ traits.SOG.bin.mat <- traits.SOG.bin %>%
 # Export data
 ```{r}
 save(traits.SOG, traits.SOG.num.mat, traits.SOG.bin.mat, trait.list,
-     file = here(paste0("data/curated_species_trait_matrices_20230801.RData")))
+     file = here(paste0("data/curated_species_trait_matrices_20230814.RData")))
 ```
 
 
