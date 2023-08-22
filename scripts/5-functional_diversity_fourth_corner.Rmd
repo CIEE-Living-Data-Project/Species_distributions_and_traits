@@ -1,0 +1,732 @@
+---
+title: "Trait space and functional diversity"
+author: "Patrick Pata"
+date: "2023-08-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load libraries and data
+```{r}
+library(tidyverse)
+library(here)
+library(lubridate)
+library(cowplot)
+library(vegan)
+library(gawdis)
+library(mFD)
+library(data.table) # for calculating convex hulls
+library(ggrepel)
+set_here(path = "..")
+`%notin%` <- Negate(`%in%`)
+
+# Community data
+# load(here("data/.RData"))
+
+# Trait data 
+load(here("data/curated_species_trait_matrices_20230821.RData"))
+
+# Community data
+load(here("data/curated_zoop_distribution_20230801.RData"))
+
+# Environment data
+load(here("data/temporary_site_environment_20230821.RData"))
+
+
+theme_set(theme_bw())
+# Assign colors to major groups
+majorgroup.colors <- data.frame(
+  majorgroup = c("Calanoid","Non-calanoid","Amphipod",
+                 "Euphausiid", "Ostracod","Polychaete","Pteropod",
+                 "Chaetognath","Appendicularian","Thaliacean",
+                 "Hydromedusae","Siphonophore","Ctenophore"),
+  color = c("blue4","dodgerblue","slateblue1",
+                    "cyan3","forestgreen","lightpink2","green2",
+                    "darkorchid4","violetred","tomato1",
+                    "tan1","yellow2","red3"))
+```
+
+# 1. Curate the species and traits for analysis
+```{r}
+# Count species presence in dataset and get % presence in samples.
+sp.pres <- zoop.SOG %>% 
+  distinct(scientificName, Index) %>% 
+  group_by(scientificName) %>% 
+  summarise(n = n(), pres.perc = n/length(unique(zoop.SOG$Index))*100,
+            .groups = "drop") 
+
+# Curate the species list
+sp.list <- sp.list %>% 
+  # Only analyze species level for now
+  filter(taxonRank %in% c("Species","Subspecies")) %>% 
+  # Exclude species that are rarely found in samples say at an arbitrary threshold of being identified in at least 3% of samples.
+  left_join(sp.pres, by = "scientificName") %>% 
+  filter(pres.perc >= 3.0)
+  
+# Curate the trait list and assign groups for fuzzy coding and gawdis calculation
+trait.list <- trait.list %>% 
+  filter(traitName %notin% c("reproductionMode","feedingMode","trophicGroup",
+                             "FM.parasite","FM.commensal")) %>% 
+  mutate(trait.group = traitName) %>% 
+  mutate(trait.group = if_else(trait.group %in% c("bodyLengthMax","dryWeight",
+                                                  "wetWeight","carbonWeight",
+                                                  "nitrogenTotal","phosphorusTotal"),
+                               "size", trait.group),
+         trait.group = if_else(trait.group %in% c("excretionRateN_15C",
+                                                  "excretionRateP_15C",
+                                                  "respirationRate_15C"),
+                               "metabolicRate", trait.group),
+         trait.group = if_else(trait.group %in% c("excretionRateN_WSC_15C",
+                                                  "excretionRateP_WSC_15C"),
+                               "excretionRate_WSC", trait.group),
+         trait.group = if_else(trait.group %in% c("respirationRate_WSC_15C"),
+                               "respirationRate_WSC", trait.group),
+         trait.group = if_else(grepl("FM.",trait.group),
+                               "feedingMode",trait.group),
+         trait.group = if_else(grepl("RM.",trait.group),
+                               "reproductionMode",trait.group),
+         trait.group = if_else(grepl("TG.",trait.group),
+                               "trophicGroup",trait.group)) %>% 
+  # Arrange traits by trait.group
+  arrange(match(trait.group, c("size","metabolicRate", "waterPWW",
+                               "carbonPDW","nitrogenPDW", "phosphorusPDW", 
+                               "ratioCN", "ratioCP", "ratioNP",
+                               "respirationRate_WSC", "excretionRate_WSC",
+                               "feedingMode", "trophicGroup", 
+                               "reproductionMode"))) %>% 
+  # Also remove FM.particle.feeder because this only applies to few species
+  filter(traitName != "FM.particle.feeder")
+
+# Subset the trait dataset and create the species x traits matrix
+traits.SOG.num.mat <- traits.SOG.num.mat %>% 
+  filter(scientificName %in% sp.list$scientificName) 
+traits.SOG.bin.mat <- traits.SOG.bin.mat %>% 
+  filter(scientificName %in% sp.list$scientificName) %>% 
+  select(-FM.particle.feeder)
+species.traits <- left_join(traits.SOG.num.mat, traits.SOG.bin.mat, 
+                            by = "scientificName") %>% 
+  relocate(trait.list$traitName, .after = "scientificName") %>% 
+  column_to_rownames("scientificName")
+```
+
+# 2. Organize the community and environment matrices
+```{r}
+# sites x species
+sites.species <- zoop.SOG %>% 
+  # sum abundance and biomass to species level across life stages or size classes
+  filter(scientificName %in% sp.list$scientificName) %>% 
+  group_by(Index, scientificName) %>% 
+  # Also convert from abundance or biomass /m3 to /m2
+  summarise(Abundance = sum(`Abundance(indiv/m3)`*`Tow_start_depth(m)`),
+            Biomass = sum(`Biomass(mg/m3)`*`Tow_start_depth(m)`),
+            .groups = "drop") %>% 
+  # Convert to matrix and select whether to analyze abundance or biomass
+  select(Index, scientificName, Abundance) %>% 
+  pivot_wider(names_from = scientificName, values_from = Abundance,
+              values_fill = 0) %>% 
+  column_to_rownames("Index")
+  
+
+# sites x environment
+# Only retain numerical information. For now, only evaluate the surface physical variables. This data matrix should be reevaluated based on the hypothesis that are being tested and if there are variables that need to be included.
+sites.environment <- zoop.SOG.envi %>% 
+  select(Index, Year, Longitude, Latitude, dayofyear, Depth,
+         Temp.surf = TempI10, Sali.surf = SaliI10, Dens.suf = DensI10,
+         MEI, PDO, NPGO, Chla) %>% 
+  filter(!is.na(Dens.suf) & !is.na(Chla))
+  # Filter out samples which do not have much environmental data
+  column_to_rownames("Index")
+
+#` Remove some data frames from the working environment
+rm(sp.pres, traits.SOG, traits.SOG.bin.mat, traits.SOG.num.mat,
+   zoop.SOG, zoop.SOG.envi)
+```
+
+# 3. Calculate and visualize the trait space
+In calculating the distance between species in the trait space, we use the gawdis() function which is able to correctly work with fuzzy coded variables and grouped traits. The gawdis function also allows users to choose either to equally weight all traits when calculating distance or ask the algorithm to calculate for the optimal weights for each trait that minimizes the differences in correlations between the overall dissimilarity and the dissimilarity based on the trait alone. The latter practically tries to even out the contribution of the traits to the overall dissimilarity which would be useful when there are traits that are partly correlated to each other but both useful.
+
+## 3.1. Calculate dissimilarity
+```{r}
+# When calculating the zooplankton trait space, maybe exclude per individual rates because these scale with size but retain the weight specific values.
+species.traits.2 <- species.traits %>% 
+  select(-c(respirationRate_15C, excretionRateN_15C, 
+            excretionRateP_15C)) 
+trait.list.2 <- trait.list %>% 
+  filter(traitName %notin% c("respirationRate_15C", "excretionRateN_15C", 
+                             "excretionRateP_15C"))
+
+set.seed(888)
+gaw.dist <- gawdis::gawdis(species.traits.2,
+                           w.type = "optimized", #use "analytic" if no NAs
+                           groups = trait.list.2$trait.group,
+                           fuzzy = c("feedingMode","trophicGroup",
+                                     "reproductionMode"),
+                           # TODO change this value if necessary
+                           opti.maxiter = 300)
+
+# Inspect the correlation between traits
+cor.mat <- attr(gaw.dist, "cor.mat")
+cormat.pval <- ggcorrplot::cor_pmat(cor.mat)
+ggcorrplot::ggcorrplot(cor.mat, hc.order = FALSE, lab = TRUE, lab_size = 3,
+     outline.col = "grey", p.mat = cormat.pval, insig = "blank") #  insig = "blank")
+ggsave(filename = here("figures/Gawdis_species_cormat.png"),
+    width = 13, height= 12, units = "in", dpi = 300, bg = "white")
+
+# This is a dataframe that contains the correlations of the dissimilarity of each trait to the overall trait dissimilarity and weights applied by gawdis to achieve this.
+gaw.stats <- data.frame(correls = attr(gaw.dist, "correls"),
+                        weights = attr(gaw.dist, "weights")) %>% 
+  rownames_to_column("traitName")
+# write.csv(gaw.stats, file = here("data/gawdis_correls_weights.csv"),
+#           row.names = FALSE)
+
+
+# Now we use the mFD package to evaluate the quality of the trait space and identify how many PCoA axes we should retain.
+gaw.space <- mFD::quality.fspaces(sp_dist = gaw.dist,
+                             fdendro = "average",
+                             maxdim_pcoa = 9,
+                             deviation_weighting = c("absolute", "squared"),
+                             fdist_scaling       = c(TRUE, FALSE))
+
+# The quality of the dimension reduction in relation to retaining the original trait dissimilarity
+gaw.space$quality_fspaces
+# retrieve the functional space associated with minimal quality metric: 
+apply(gaw.space$quality_fspaces, 2, which.min) # This suggests that 6 PCoA axes is best
+
+# Plot quality metrics
+gaw.space$"quality_fspaces" %>%
+  tibble::as_tibble(rownames = "Funct.space") %>%
+  tidyr::pivot_longer(cols =! Funct.space, names_to = "quality_metric", values_to = "Quality") %>%
+  ggplot2::ggplot(ggplot2::aes(x = Funct.space, y = Quality, 
+                               color = quality_metric, shape = quality_metric)) +
+  ggplot2::geom_point() 
+
+# This compares the different trait space dimensions from the complete gawdis trait space.
+mFD::quality.fspaces.plot(
+  fspaces_quality = gaw.space, 
+  quality_metric  = "mad",
+  fspaces_plot    = c("tree_average", "pcoa_2d", "pcoa_3d",'pcoa_6d'))
+
+# ggsave(filename = here("figures/Quality_functional_space_reduction.png"),
+#     width = 13, height= 10, units = "in", dpi = 300, bg = "white")
+
+```
+
+
+## 3.2. DIY Biplot of the trait space
+Axis 1: Size gradient
+Axis 2: Feeding-repro strategy trade-off
+Axis 3: Pulls out detritivores + high CN current feeders
+Axis 4: Differentiates cruise vs passive ambush carnivory esp for soft bodied
+```{r, fig.width=7, warning=FALSE}
+# Eigenvalues of the main axes
+pcoa.eig <- gaw.space$details_fspaces$pc_eigenvalues %>% 
+  mutate(Cum_rel_eig = cumsum(Relative_eig))
+# PCoA coordinates for each species. Select the number of axes determined from above.
+species.pcoa <- gaw.space$details_fspaces$sp_pc_coord[,c(1:6)]
+pcoa.vec <- species.pcoa %>% 
+  as.data.frame() %>% 
+  rownames_to_column("scientificName") %>%
+  left_join(sp.list,  by = "scientificName") %>% 
+  mutate(majorgroup = factor(majorgroup, levels = majorgroup.colors$majorgroup))
+  # left_join(majorgroup.colors, by = "majorgroup")
+
+# DIY Plots with convex hulls
+axisname <- colnames(pcoa.vec[,c(2:7)])
+
+# Axis 1 & 2
+axestoplot <- c(1,2)
+# Calculate hulls
+clustPoints <- as.data.frame(species.pcoa[,axestoplot]) %>%
+  mutate(group = "all") %>% 
+  bind_cols(majorgroup = pcoa.vec$majorgroup)
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,3], key="level")
+hulls.global <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,4], key="level")
+hulls.mgroup <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+
+# Plot trait space
+g1 <- ggplot(pcoa.vec, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_polygon(data = hulls.global, aes(x=xdata,y=ydata,fill=level),
+                color = "grey30", fill = "white", show.legend = FALSE) +
+  geom_polygon(data = hulls.mgroup, aes(x=xdata,y=ydata,fill=level,color=level), 
+               alpha = 0.05,show.legend = FALSE) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, aes(color = majorgroup)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        panel.background = element_rect(fill = "grey80")) 
+
+
+# Axis 3 & 4
+axestoplot <- c(3,4)
+# Calculate hulls
+clustPoints <- as.data.frame(species.pcoa[,axestoplot]) %>%
+  mutate(group = "all") %>% 
+  bind_cols(majorgroup = pcoa.vec$majorgroup)
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,3], key="level")
+hulls.global <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,4], key="level")
+hulls.mgroup <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+
+# Plot trait space
+g2 <- ggplot(pcoa.vec, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_polygon(data = hulls.global, aes(x=xdata,y=ydata,fill=level),
+                color = "grey30", fill = "white", show.legend = FALSE) +
+  geom_polygon(data = hulls.mgroup, aes(x=xdata,y=ydata,fill=level,color=level), 
+               alpha = 0.05,show.legend = FALSE) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, aes(color = majorgroup)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme(aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        panel.background = element_rect(fill = "grey80"))
+
+# Axis 5&6
+axestoplot <- c(5,6)
+# Calculate hulls
+clustPoints <- as.data.frame(species.pcoa[,axestoplot]) %>%
+  mutate(group = "all") %>% 
+  bind_cols(majorgroup = pcoa.vec$majorgroup)
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,3], key="level")
+hulls.global <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,4], key="level")
+hulls.mgroup <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+
+# Plot trait space
+g3 <-  ggplot(pcoa.vec, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_polygon(data = hulls.global, aes(x=xdata,y=ydata,fill=level),
+                color = "grey30", fill = "white", show.legend = FALSE) +
+  geom_polygon(data = hulls.mgroup, aes(x=xdata,y=ydata,fill=level,color=level), 
+               alpha = 0.05,show.legend = FALSE) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, aes(color = majorgroup)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, #legend.position= c(0.88,0.7), 
+         legend.position = "right",
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        panel.background = element_rect(fill = "grey80")) 
+
+plot_grid(g1,g2,g3, nrow = 1, labels = c("A","B","C"),
+          align = "hv", rel_widths = c(1,1,1.3))
+ggsave(filename = here("figures/Gawdis_species_trait_space.png"),
+    width = 20, height= 6, units = "in", dpi = 300, bg = "white")
+
+```
+## 3.3. Use plotly to check names of species in trait space
+```{r, fig.width=6, eval=FALSE}
+library(plotly)
+
+# Axis 1 & 2
+axestoplot <- c(1,2)
+# Calculate hulls
+clustPoints <- as.data.frame(species.pcoa[,axestoplot]) %>%
+  mutate(group = "all") %>% 
+  bind_cols(majorgroup = pcoa.vec$majorgroup)
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,3], key="level")
+hulls.global <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,4], key="level")
+hulls.mgroup <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+
+# Plot trait space
+g0 <- ggplot(pcoa.vec, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], 
+                            color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_polygon(data = hulls.global, aes(x=xdata,y=ydata,fill=level),
+                color = "grey30", fill = "white", show.legend = FALSE) +
+  geom_polygon(data = hulls.mgroup, aes(x=xdata,y=ydata,fill=level,color=level), 
+               alpha = 0.05,show.legend = FALSE) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, 
+             aes(color = majorgroup, text = scientificName)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        panel.background = element_rect(fill = "grey80")) 
+
+axestoplot <- c(3,4)
+# Calculate hulls
+clustPoints <- as.data.frame(species.pcoa[,axestoplot]) %>%
+  mutate(group = "all") %>% 
+  bind_cols(majorgroup = pcoa.vec$majorgroup)
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,3], key="level")
+hulls.global <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,4], key="level")
+hulls.mgroup <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+
+# Plot trait space
+g00 <- ggplot(pcoa.vec, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], 
+                            color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_polygon(data = hulls.global, aes(x=xdata,y=ydata,fill=level),
+                color = "grey30", fill = "white", show.legend = FALSE) +
+  geom_polygon(data = hulls.mgroup, aes(x=xdata,y=ydata,fill=level,color=level), 
+               alpha = 0.05,show.legend = FALSE) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, 
+             aes(color = majorgroup, text = scientificName)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        panel.background = element_rect(fill = "grey80")) 
+axestoplot <- c(4,6)
+# Calculate hulls
+clustPoints <- as.data.frame(species.pcoa[,axestoplot]) %>%
+  mutate(group = "all") %>% 
+  bind_cols(majorgroup = pcoa.vec$majorgroup)
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,3], key="level")
+hulls.global <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+dt <- data.table(xdata=clustPoints[,1], ydata=clustPoints[,2], 
+                 level=clustPoints[,4], key="level")
+hulls.mgroup <- dt[dt[, .I[chull(xdata, ydata)], by = level]$V1]
+
+# Plot trait space
+g000 <- ggplot(pcoa.vec, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], 
+                            color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_polygon(data = hulls.global, aes(x=xdata,y=ydata,fill=level),
+                color = "grey30", fill = "white", show.legend = FALSE) +
+  geom_polygon(data = hulls.mgroup, aes(x=xdata,y=ydata,fill=level,color=level), 
+               alpha = 0.05,show.legend = FALSE) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, 
+             aes(color = majorgroup, text = scientificName)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        panel.background = element_rect(fill = "grey80")) 
+ggplotly(g0)
+ggplotly(g00)
+ggplotly(g000)
+```
+
+## 3.4 Biplots with trait correlation
+```{r, fig.width=6}
+# Coordinates from correlation of traits to the PCOA axes
+traits.pcoa.cor <- cor(scale(species.traits , center=TRUE, scale=TRUE), 
+         pcoa.vec[,c(2:7)], use="pairwise.complete.obs")  
+
+# Identifying significant relationships between traits and PCoA axes
+traits.pcoa.cor.sig <- mFD::traits.faxes.cor(
+  sp_tr = species.traits,
+  sp_faxes_coord = species.pcoa,
+  plot = FALSE, stop_if_NA = FALSE) %>%  
+  filter(p.value < 0.05) %>% 
+  arrange(axis, -value) %>% 
+  mutate(r = sqrt(value))
+
+
+# Axis 1 & 2
+axestoplot <- c(1,2)
+# Show only traits with at least one significant correlation to the axes
+U0 <- traits.pcoa.cor.sig %>% 
+  filter(axis %in% axisname[axestoplot]) %>% 
+  filter(r >= 0.33) %>% 
+  distinct(trait)
+U1 <- as.data.frame(traits.pcoa.cor[,axestoplot])
+  # rownames_to_column("trait") %>% 
+  # filter(trait %in% U0$trait) %>% 
+  # column_to_rownames("trait")
+maxpos <- 1/max(abs(U1))
+pcoa.vec.2 <- pcoa.vec 
+pcoa.vec.2[axisname[axestoplot]] <- pcoa.vec.2[axisname[axestoplot]]* maxpos*2
+# Plot trait space
+g4 <- ggplot(pcoa.vec.2, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, aes(color = majorgroup)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12)) + 
+      # geom_segment(data = U1, aes(x = rep(0,nrow(U1)),y =rep(0,nrow(U1)), 
+      #                            xend = U1[,1],yend = U1[,2]), 
+      #              lineend = "round", size = 0.5, colour = "grey30") +
+  geom_point(data = U1, color = "black", shape = 8)+
+  geom_text_repel(data = U1, aes(label=rownames(U1),), 
+                  color="black", size = 3)
+
+
+# Axis 3&4
+axestoplot <- c(3,4)
+# Show only traits with at least one significant correlation to the axes
+U0 <- traits.pcoa.cor.sig %>% 
+  filter(axis %in% axisname[axestoplot]) %>% 
+  filter(r >= 0.33) %>% 
+  distinct(trait)
+U2 <- as.data.frame(traits.pcoa.cor[,axestoplot]) 
+  # rownames_to_column("trait") %>% 
+  # filter(trait %in% U0$trait) %>% 
+  # column_to_rownames("trait")
+maxpos <- 1/max(abs(U2))
+pcoa.vec.2 <- pcoa.vec 
+pcoa.vec.2[axisname[axestoplot]] <- pcoa.vec.2[axisname[axestoplot]]* maxpos*2
+# Plot trait space
+g5 <- ggplot(pcoa.vec.2, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, aes(color = majorgroup)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12)) + 
+      # geom_segment(data = U2, aes(x = rep(0,nrow(U2)),y =rep(0,nrow(U2)), 
+      #                            xend = U2[,1],yend = U2[,2]), 
+  #              lineend = "round", size = 0.5, colour = "grey30") +
+  geom_point(data = U2, color = "black", shape = 8)+
+  geom_text_repel(data = U2, aes(label=rownames(U2),), 
+                  color="black", size = 3)
+
+# Axis 5&6
+axestoplot <- c(5,6)
+# Show only traits with at least one significant correlation to the axes
+U0 <- traits.pcoa.cor.sig %>% 
+  filter(axis %in% axisname[axestoplot]) %>% 
+  filter(r >= 0.33) %>% 
+  distinct(trait)
+U3 <- as.data.frame(traits.pcoa.cor[,axestoplot]) 
+  # rownames_to_column("trait") %>% 
+  # filter(trait %in% U0$trait) %>% 
+  # column_to_rownames("trait")
+maxpos <- 1/max(abs(U2))
+pcoa.vec.2 <- pcoa.vec 
+pcoa.vec.2[axisname[axestoplot]] <- pcoa.vec.2[axisname[axestoplot]]* maxpos *2
+# Plot trait space
+g6 <- ggplot(pcoa.vec.2, aes_string(x = axisname[axestoplot[1]], 
+                            y = axisname[axestoplot[2]], color = "majorgroup")) + 
+  labs(x = axisname[axestoplot[1]], y = axisname[axestoplot[2]]) +
+  geom_vline(xintercept = 0, colour='darkgray') + 
+  geom_hline(yintercept = 0, colour='darkgray') +
+  geom_point(size = 3, alpha = 0.9, shape = 16, aes(color = majorgroup)) +
+  scale_color_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  scale_fill_manual(values = majorgroup.colors$color, name = "Major Groups") +
+  theme( aspect.ratio = 1, legend.position="none", 
+        legend.title = element_text(color = 'black', size = 12, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12)) + 
+      # geom_segment(data = U3, aes(x = rep(0,nrow(U3)),y =rep(0,nrow(U3)), 
+      #                            xend = U3[,1],yend = U3[,2]), 
+      #              lineend = "round", size = 0.5, colour = "grey30") +
+  geom_point(data = U3, color = "black", shape = 8)+
+  geom_text_repel(data = U3, aes(label=rownames(U3),), 
+                  color="black", size = 3)
+
+plot_grid(g4,g5,g6, nrow = 1, labels = c("D","E","F"))
+
+ggsave(filename = here("figures/Gawdis_species_trait_correlation_noarrow.png"),
+    width = 20, height= 6, units = "in", dpi = 300, bg = "white")
+
+
+rm(g0, g1,g2,g3, g4,g5,g6, U0, U1, U2, U3, cor.mat, cormat.pval, clustPoints, dt,
+  hulls.global, hulls.mgroup, pcoa.vec.2, species.traits.2)
+```
+
+# 4. Calculate functional diversity indices from the reduced gawdis trait space
+```{r}
+# Note that the species weights here are dependent on whether abundance or biomass was used for the sites x species matrix
+fundiv <- mFD::alpha.fd.multidim(sp_faxes_coord = species.pcoa,
+                       asb_sp_w = as.matrix(sites.species), verbose = FALSE)
+
+# Extract the functional diversity indices
+fundiv.ind <- fundiv$functional_diversity_indices %>% 
+  rownames_to_column("Index") %>% 
+  pivot_longer(cols = -c(Index), 
+               names_to = "FD.Index", values_to = "Value") %>% 
+  filter(FD.Index %in% c("fric","fdis","feve","fdiv",
+                      "fspe","fori","fmpd","fnnd")) %>% 
+  mutate(FD.Index = factor(FD.Index,
+                        levels = c("fric","fdis","feve","fdiv",
+                                   "fspe","fori","fmpd","fnnd"))) %>% 
+  # Assign some metadata for exploring regional and temporal differences
+  left_join(select(zoop.SOG.meta, Index, Region, Season), by = "Index") 
+
+# Violin plot
+# ggplot(fundiv.ind, aes(x = Region, y = Value, fill = Region)) +
+#   geom_violin(aes(color = Region), alpha = 0.6) + 
+ggplot(fundiv.ind, aes(x = Season, y = Value, fill = Season)) +
+  geom_violin(aes(color = Season), alpha = 0.6) + 
+  geom_boxplot(width = 0.1, color = "grey25", outlier.shape = NA) +
+  stat_summary(fun = "mean", geom = "crossbar", width = 0.5,
+               colour = "black") +
+  theme(legend.position = "none") +
+  facet_wrap(~FD.Index, scales = "free_y", nrow = 2)
+```
+
+# 5. Fourth corner analysis with the ade4 package
+As a demonstration, we will do this for a specific period and only for sites with complete environmental data.
+
+*WARNING* Make sure to deal with NA trait and envi values for the 4th corner analysis.
+
+## 5.1. Filtering the data
+*TODO* Here we can adjust the spatial and temporal resoltion of the analysis. For example, by every season/month by region.
+```{r}
+# For now, select some traits and species with complete trait data for those traits
+z.spe.traits <- species.traits %>% 
+  select(bodyLengthMax, carbonWeight, carbonPDW, nitrogenPDW, 
+         ratioCN, ratioCP, ratioNP, respirationRate_WSC_15C)
+z.spe.traits <- z.spe.traits[which(!is.na(rowSums(z.spe.traits))),]
+# log transform traits that span multiple orders of magnitude
+z.spe.traits <- z.spe.traits %>% 
+  mutate(bodyLengthMax = log(bodyLengthMax), carbonWeight = log(carbonWeight),
+         respirationRate_WSC_15C = log(respirationRate_WSC_15C))
+# standardize to mean 0 and unit variance
+z.spe.traits <- decostand(z.spe.traits, method = "standardize")
+
+# Reorder sites x species to follow sites x environment
+z.site.spe <- sites.environment %>% 
+  distinct(Index) %>% 
+  left_join(rownames_to_column(sites.species, "Index"), by = "Index") %>% 
+  column_to_rownames("Index") %>% 
+  select(rownames(z.spe.traits))
+# log transform the matrix
+z.site.spe <- log1p(z.site.spe)
+
+# Standardize the environment matrix
+z.site.envi <- sites.environment %>% 
+  column_to_rownames("Index")
+z.site.envi <- decostand(z.site.envi, method = "standardize")
+
+# z.site.envi %>% 
+#   rownames_to_column("Index") %>% 
+#   left_join(select(zoop.SOG.meta, Index, Region, Season, Month)) %>% 
+#   group_by(Region, Year, Season, Month) %>% 
+#   count()
+```
+
+## 5.2. Main analysis
+The fourth corner analysis estimates the D matrix and test if the relationship between traits and habitat variables are significant through permutations of the rows and columns of the L matrix.
+
+Matrices: L - sites x species R - sites x habitat Q'- traits x species D - traits x habitat (for estimation)
+
+model 2: environmental control over species assemblages. H0 sp composition not related to habitat model 4: random species attributes. H0 species related to habitats but not related to traits model 6: combine models 2 + 4. Must reject both H0 for model 2 and 4.
+
+Because this is a combination, need to correct for multiple testing. Either Holm or FDR (false discovery rate) corrections.
+```{r}
+library(ade4)
+
+fcorner <- ade4::fourthcorner(tabR = z.site.envi,
+                              tabL = z.site.spe,
+                              tabQ = z.spe.traits,
+                              p.adjust.method.G = "none",
+                              p.adjust.method.D = "none",
+                              nrepet = 99)
+# Correction for multiple testing using FDR
+fcorner.adj <- p.adjust.4thcorner(fcorner,
+                                  p.adjust.method.G = 'fdr', 
+                                  p.adjust.method.D = 'fdr',
+                                  p.adjust.D = "global")
+
+
+fcorner.sum <- summary(fcorner.adj)
+
+# Red: significant positive, blue: significant negative
+plot(fcorner.adj, alpha = 0.05, stat = "G")
+```
+
+## 5.3. Combine fourth corner with RLQ analysis
+
+The RLQ is a simultaneous ordination of the R, L, and Q matrices. These are then combined to explore the relationship between habitat and traits, mediated by the species composition.
+
+```{r, fig.width=4, fig.height=}
+# Preliminary analyses: CA, Hill-Smith and PCA
+afcL <- dudi.coa(z.site.spe, scannf = FALSE)
+
+# If the matrix going into this contains only quantitative variables, this is equivalent to a normed PCA. The algorithm centers and norms the values. Note that the input is the scaled season x envi matrix and doing scale() twice will not change the results. It just flips the y axis.
+acpR <- dudi.hillsmith(z.site.envi,
+                             row.w = afcL$lw,
+                             scannf = FALSE)
+acpQ <- dudi.pca(z.spe.traits,
+                       row.w = afcL$cw,
+                       scannf = FALSE)
+
+# RLQ analyses
+rlq.results <- rlq(dudiR = acpR,
+           dudiL = afcL,
+           dudiQ = acpQ,
+           scannf = FALSE)
+
+# RLQ results
+# png(file = "../figures/RLQ_Seasonal_20230731.png",
+#     width = 12, height = 8, units = "in", res = 300)
+plot(rlq.results)
+# dev.off()
+
+# Traits by environment crossed table
+rlq.results$tab
+
+fourthcorner.rlq(rlq.results,type="Q.axes")
+fourthcorner.rlq(rlq.results,type="R.axes")
+
+# # Can run this script if there are significant results in fourth corner analysis
+# plot(fcorner.adj,
+#      x.rlq = rlq.results,
+#      alpha = 0.05,
+#      stat = "D2",
+#      type = "biplot")
+```
+

@@ -38,12 +38,13 @@ trait.directory <- read.csv(here("tables/trait_directory_20230628.csv")) %>%
 Only include records at the species level and select traits of interest
 ```{r}
 # Determine traits of interest
-trait.list <- data.frame(traitName = c("bodyLengthMax","carbonWeight","dryWeight","wetWeight",
+trait.list <- data.frame(traitName = c("bodyLengthMax","carbonWeight","dryWeight",
+                                       "wetWeight","waterPWW", "carbonPDW",
                 "nitrogenTotal","nitrogenPDW","phosphorusTotal","phosphorusPDW",
                 "ratioCN","ratioCP","ratioNP",
                 "respirationRate_15C","respirationRate_WSC_15C",
-                "excretionRateN_15C","excretionRateN_WSDW_15C",
-                "excretionRateP_15C","excretionRateP_WSDW_15C",
+                "excretionRateN_15C","excretionRateN_WSC_15C",
+                "excretionRateP_15C","excretionRateP_WSC_15C",
                 # Categorical traits
                 "feedingMode","reproductionMode","trophicGroup",
                 # Binary versions of categorical traits
@@ -51,7 +52,16 @@ trait.list <- data.frame(traitName = c("bodyLengthMax","carbonWeight","dryWeight
                 "TG.carnivore","TG.omnivore","TG.herbivore","TG.detritivore",
                 "FM.active.ambush","FM.passive.ambush","FM.cruise","FM.current",
                 "FM.particle.feeder","FM.parasite","FM.commensal")) %>% 
-  left_join(trait.directory, by = "traitName")
+  left_join(trait.directory, by = "traitName") %>% 
+  # Use weight specific carbon instead of dry weight for excretion rate
+  mutate(traitUnit = if_else(traitName == "excretionRateN_WSC_15C",
+                             "ug N-NH4+ mg C^-1 h^-1", traitUnit),
+         traitUnit = if_else(traitName == "excretionRateP_WSC_15C",
+                             "ug P-PO43- mg C^-1 h^-1", traitUnit),
+         valueType = if_else(traitName %in% c("excretionRateN_WSC_15C",
+                                              "excretionRateP_WSC_15C"),
+                             "numeric", valueType))
+
 
 
 traits.subset <- traits.lvl3 %>% 
@@ -591,8 +601,10 @@ traits.SOG.bin.mat <- traits.SOG.bin %>%
 # Export data
 ```{r}
 save(traits.SOG, traits.SOG.num.mat, traits.SOG.bin.mat, trait.list,
-     file = here(paste0("data/curated_species_trait_matrices_20230821.RData")))
+     file = here("data/curated_species_trait_matrices_20230821.RData"))
 ```
+
+
 
 # Plot distribution of trait coverage and estimates.
 ```{r}

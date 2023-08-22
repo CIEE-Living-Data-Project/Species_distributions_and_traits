@@ -43,16 +43,55 @@ climate <- getClimateIndices(index = c("PDO","NPGO","MEI"),
 
 # Match environmental data with the net metadata
 zoop.SOG.envi <- zoop.SOG.meta %>% 
-  select(NetKey, Longitude, Latitude, Year, Month, Day, 
+  select(Index, NetKey, Season, Region, Longitude, Latitude, 
+         Year, Month, dayofyear, 
          Depth = `Bottom_depth(m)`) %>% 
   # Add CTD data (for 530 of the samples). There are not enough chemistry data to match each sample. For the CTD data, select the surface (0-10m) and net depth (0-net tow depth) averages temperature, salinity, and density values.
   left_join(select(physics.ctd, NetKey, TempI10, TempINet, SaliI10, SaliINet,
                    DensI10, DensINet), by = "NetKey") %>% 
   # Add climate information
-  left_join(climate, by = join_by(Year,Month))
+  left_join(climate, by = join_by(Year,Month)) %>% 
+  select(-NetKey)
 
 
+# For now, use average satellite chlorophyll-a values for a year, month, and region and assign these to samples collected during these periods.
+# TODO can further refine the specificity of the spatial matching by finding the satellite grid cell a sample was collected from.
+chl.timeseries <- satellite.sog %>% 
+  # Select data from 1997 to 2018
+  filter(year >= 1997 & year <= 2018) %>% 
+  # The coverage of grid cells with chlorophyll data varies every month due to cloud cover. For calculating the SOG chlorophyll average, only include grid cells which are often sampled throughout the time series, set to an arbitrary threshold of N data points = 100. 
+  group_by(lon, lat) %>% 
+  mutate(Ndata = sum(!is.na(chl))) %>% 
+  ungroup() %>% 
+  filter(Ndata >= 100) %>% 
+  # Calculating the average chlorophyll for SOG. Also divide into northern and central SOG roughly at 49.5 degrees latitude.
+  # overall average
+  group_by(year, month) %>% 
+  mutate(chla.sog = mean(chl, na.rm = T),
+         chla.sog.sd = sd(chl, na.rm = T)) %>% 
+  # regional average
+  mutate(Region = if_else(lat >= 49.5, 
+                          "Northern Strait of Georgia", 
+                          "Central Strait of Georgia")) %>%
+  group_by(year, month, Region) %>%
+  mutate(chla.sog.region = mean(chl, na.rm = T),
+         chla.sog.region.sd = sd(chl, na.rm = T)) %>%
+  ungroup() %>% 
+  # summarise dataframe
+  select(-c(lon,lat,chl,Ndata)) %>% 
+  distinct() %>% 
+  rename(Year = year, Month = month)
 
+
+# Merge the CTD and satellite chlorophyll data
+zoop.SOG.envi <- zoop.SOG.envi %>% 
+  left_join(select(chl.timeseries, Year, Month, Region, Chla = chla.sog.region),
+            by = c("Year","Month","Region"))
+
+
+# Output sites x environment data
+save(zoop.SOG.envi,
+     file = here("data/temporary_site_environment_20230821.RData"))
 
 # TODO depending on the spatial and temporal resolution of the analysis, the CTD, satellite, Fraser discharge, and lighthouse data can be averaged first before matching with the net data.
 
@@ -232,11 +271,11 @@ chl.timeseries <- satellite.sog %>%
   group_by(year, month) %>% 
   mutate(chla.sog = mean(chl, na.rm = T),
          chla.sog.sd = sd(chl, na.rm = T)) %>% 
-  # # regional average
-  # mutate(region = if_else(lat >= 49.5, "northern", "central")) %>% 
-  # group_by(year, month, region) %>% 
-  # mutate(chla.sog.region = mean(chl, na.rm = T),
-  #        chla.sog.region.sd = sd(chl, na.rm = T)) %>% 
+  # regional average
+  mutate(region = if_else(lat >= 49.5, "northern", "central")) %>%
+  group_by(year, month, region) %>%
+  mutate(chla.sog.region = mean(chl, na.rm = T),
+         chla.sog.region.sd = sd(chl, na.rm = T)) %>%
   ungroup() %>% 
   
   # summarise dataframe
@@ -254,12 +293,13 @@ ggplot(data = distinct(chl.timeseries, year.month, .keep_all = T ),
        aes(x = year.month, y = chla.sog)) +
   geom_point() +
   geom_line() 
-# # per region
-# ggplot(data = chl.timeseries,
-#        aes(x = year.month, y = chla.sog.region,
-#            color = region)) +
-#   geom_point() +
-#   geom_line()
+# per region
+ggplot(data = chl.timeseries,
+       aes(x = year.month, y = chla.sog.region,
+           color = region)) +
+  geom_point() +
+  geom_line()
+
 ```
 
 Anomally time series: For time series data, it is often interesting to look into the anomaly of a parameter relative to a climatological mean. Here we calculate the monthly climatology of chla in the SOG and then, calculate the anomaly time series.
