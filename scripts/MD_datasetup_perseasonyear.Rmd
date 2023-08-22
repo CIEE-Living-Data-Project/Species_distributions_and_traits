@@ -1,0 +1,146 @@
+---
+title: "Setting up zoop data matrices per season & year"
+author: "meganedeziel"
+date: "2023-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(FD)
+library(vegan)
+library(here)
+library(ggplot2)
+```
+
+#1 - Data importation
+```{r}
+# species x trait matrix
+here("data")
+trait<-load(here("data", "curated_species_trait_matrices_20230814.RData")) #we have one matrix of binary traits (trophic group, feeding mode, reprod. mode) and one numerical
+#only one trait is actually coded as binary: FM:particle feeder
+traits.all<-left_join(traits.SOG.num.mat, traits.SOG.bin.mat, by="scientificName")
+
+# abundance data
+abun<-load(here("data", "curated_zoop_distribution_20230801.RData"))
+abun_mat<-zoop.SOG[zoop.SOG$scientificName %in% traits.all$scientificName, ] #all species in the abundance dataset are present in the trait matrix
+```
+Notes on the abundance dataset:
+141 species, we have trait data for all the species in the abundance matrix.
+Data was collected in two regions: Central Strait of Georgia, Northern Strait of Georgia
+49 stations in Central Strait of Georgia
+56 stations in Northern Strait of Georgia
+
+#2 - Calculate abundance and biomass per year AND per season in each year
+```{r}
+#create a row for mean abundance and biomass for each species (average the rows with different “Size_class_or_life_stage”)
+abun_per_season<-abun_mat %>%
+  group_by(scientificName, Region, Station, Year, Season) %>%
+  mutate(biomass_per_season=sum(`Biomass(mg/m3)`)) %>% #calc total biomass per season
+  mutate(abundance_per_season=sum(`Abundance(indiv/m3)`)) %>% #calc total abundance per season
+  ungroup() %>%
+  select(scientificName, majorgroup, Region, Station, Longitude, Latitude, Year, Season, biomass_per_season, abundance_per_season) %>%
+  unique() %>%
+  group_by(Region, Station, Year, Season) %>%
+  mutate(rel_biomass_per_season=biomass_per_season/sum(biomass_per_season)) %>% #relative biomass per season
+  mutate(rel_abundance_per_season=abundance_per_season/sum(abundance_per_season)) %>% #relative abundance per season
+  ungroup() %>%
+  mutate(seasonxyear_id=paste(Season, Year, sep="_"))
+
+abun_per_year<-abun_per_season %>%
+  group_by(scientificName, Region, Station, Year) %>%
+  mutate(biomass_per_year=sum(biomass_per_season)) %>% #calc total biomass per year
+  mutate(abundance_per_year=sum(abundance_per_season)) %>% #calc total abundance per year
+  ungroup() %>%
+  select(scientificName, majorgroup, Region, Station, Longitude, Latitude, Year, biomass_per_year, abundance_per_year) %>%
+  unique() %>%
+  group_by(Region, Station, Year) %>%
+  mutate(rel_biomass_per_year=biomass_per_year/sum(biomass_per_year)) %>%
+  mutate(rel_abundance_per_year=abundance_per_year/sum(abundance_per_year)) %>%
+  ungroup()
+```
+
+#3 Splitting the dataframe in different matrices for each season and year, put them in wide format
+```{r}
+#I need one different matrix for each season within a year and for each year - I'll create a list of matrices
+
+#TODO: Hello Patrick! So what I wanted was to create different matrices for every year and for every season within a year.
+#I think I finally fixed it, and Yes, I was possible to achieve this with some extra group_by prior to pivoting the matrices in wide format.
+#So this is what I did with the group_byS above, and below I am dividing the 2 big dataframes abun_per_season and abun_per_year in different matrices for each season and year.
+
+### MATRICES PER SEASON WITHIN A YEAR
+#List of matrices of ABUNDANCE
+abun_per_season_l<-abun_per_season %>%
+  select(c(1:6, 13, 10)) %>%
+  pivot_wider(names_from=Station, values_from=abundance_per_season) %>%
+  group_by(seasonxyear_id) %>%
+  nest() 
+
+#List of matrices of RELATIVE ABUNDANCE
+rel_abun_per_season_l<-abun_per_season %>%
+  select(c(1:6, 13, 12)) %>%
+  pivot_wider(names_from=Station, values_from=rel_abundance_per_season) %>%
+  group_by(seasonxyear_id) %>%
+  nest() 
+
+#List of matrices of BIOMASS
+biom_per_season_l<-abun_per_season %>%
+  select(c(1:6, 13, 9)) %>%
+  pivot_wider(names_from=Station, values_from=biomass_per_season) %>%
+  group_by(seasonxyear_id) %>%
+  nest() 
+
+#List of matrices of RELATIVE BIOMASS
+rel_biom_per_season_l<-abun_per_season %>%
+  select(c(1:6, 13, 11)) %>%
+    pivot_wider(names_from=Station, values_from=rel_biomass_per_season) %>%
+  group_by(seasonxyear_id) %>%
+  nest() 
+
+### MATRICES PER YEAR
+#List of matrices of ABUNDANCE 
+abun_per_year_l<-abun_per_year %>%
+  select(c(1:7, 9)) %>%
+  pivot_wider(names_from=Station, values_from=abundance_per_year) %>%
+  group_by(Year) %>%
+  nest()
+
+#List of matrices of RELATIVE ABUNDANCE
+rel_abun_per_year_l<-abun_per_year %>%
+  select(c(1:7, 11)) %>%
+  pivot_wider(names_from=Station, values_from=rel_abundance_per_year) %>%
+  group_by(Year) %>%
+  nest()
+
+#List of matrices of BIOMASS
+biom_per_year_l<-abun_per_year %>%
+  select(c(1:8)) %>%
+  pivot_wider(names_from=Station, values_from=biomass_per_year) %>%
+  group_by(Year) %>%
+  nest()
+
+rel_biom_per_year_l<-abun_per_year %>%
+  select(c(1:7, 10)) %>%
+  pivot_wider(names_from=Station, values_from=rel_biomass_per_year) %>%
+  group_by(Year) %>%
+  nest()
+
+#Here we see that for some years only 1 station was sampled (ex: in 1996, only station GEO1 was sampled.)
+```
+
+We now have 8 different lists of matrices (well, they are still class df):
+abun_per_season_l
+rel_abun_per_season_l
+biom_per_season_l
+rel_biom_per_season_l
+abun_per_year_l
+rel_abun_per_year_l
+biom_per_year_l
+rel_biom_per_year_l
+
+We will be able to iterate over these lists to calculate different indices for every season or year.
+
