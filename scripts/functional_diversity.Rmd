@@ -1,0 +1,163 @@
+---
+title: "functional_diversity"
+author: "meganedeziel"
+date: "2023-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(FD)
+library(vegan)
+library(here)
+library(ggplot2)
+```
+
+#1 - Data importation
+```{r}
+# species x trait matrix
+here("data")
+trait<-load(here("data", "curated_species_trait_matrices_20230814.RData")) #we have one matrix of binary traits (trophic group, feeding mode, reprod. mode) and one numerical
+#only one trait is actually coded as binary: FM:particle feeder
+traits.all<-left_join(traits.SOG.num.mat, traits.SOG.bin.mat, by="scientificName")
+
+# abundance data
+abun<-load(here("data", "curated_zoop_distribution_20230801.RData"))
+abun_mat<-zoop.SOG[zoop.SOG$scientificName %in% traits.all$scientificName, ] #all species in the abundance dataset are present in the trait matrix
+```
+Notes on the abundance dataset:
+141 species, we have trait data for all the species in the abundance matrix.
+Data was collected in two regions: Central Strait of Georgia, Northern Strait of Georgia
+49 stations in Central Strait of Georgia
+56 stations in Northern Strait of Georgia
+
+#2 - Calculate abundance and biomass per year AND per season in each year
+```{r}
+#create a row for mean abundance and biomass for each species (average the rows with different “Size_class_or_life_stage”)
+abun_mat<-abun_mat %>%
+  group_by(scientificName, Region, Station, Year, Season) %>%
+  mutate(biomass_per_season=sum(`Biomass(mg/m3)`)) %>%
+  mutate(abundance_per_season=sum(`Abundance(indiv/m3)`)) %>%
+  ungroup() %>%
+  select(scientificName, majorgroup, Region, Station, Longitude, Latitude, Year, Season, biomass_per_season, abundance_per_season) %>%
+  unique() %>%
+  group_by(scientificName, Region, Station, Year) %>%
+  mutate(biomass_per_year=sum(biomass_per_season)) %>%
+  mutate(abundance_per_year=sum(abundance_per_season)) %>%
+  ungroup() %>%
+  select(scientificName, majorgroup, Region, Station, Longitude, Latitude, Year, Season, biomass_per_season, abundance_per_season, biomass_per_year, abundance_per_year) %>%
+  unique() %>%
+  mutate(seasonxyear_id=paste(Season, Year, sep="_"))
+
+#I need one different matrix for each season within a year and for each year - I'll create a list of matrices
+#Matrices per season within a year - one column gives abundance per season, another gives biomass per season
+abun_per_season<-abun_mat %>%
+  select(c(1:6, 13, 10)) %>%
+  pivot_wider(names_from=Station, values_from=abundance_per_season) %>%
+  group_by(seasonxyear_id) %>%
+  nest() 
+
+biom_per_season<-abun_mat %>%
+  select(c(1:6, 13, 9)) %>%
+  pivot_wider(names_from=Station, values_from=biomass_per_season) %>%
+  group_by(seasonxyear_id) %>%
+  nest() 
+
+#Matrices per year 
+abun_per_year<-abun_mat %>%
+  select(c(1:7, 12)) %>%
+  unique(.) %>%
+  pivot_wider(names_from=Station, values_from=abundance_per_year) %>%
+  group_by(Year) %>%
+  nest()
+
+biom_per_year<-abun_mat %>%
+  select(c(1:7, 11)) %>%
+  unique(.) %>%
+  pivot_wider(names_from=Station, values_from=biomass_per_year) %>%
+  group_by(Year) %>%
+  nest()
+
+#Here we see that for some years only 1 station was sampled (ex: in 1996, only station GEO1 was sampled.)
+```
+
+We now have 4 different lists of matrices:
+abun_per_season 
+biom_per_season
+abun_per_year
+biom_per_year
+
+Now we need to transform these matrices in species relative abundances. 
+
+#4 - Calculate species relative abundances in each season and each year, for every station
+```{r}
+head(abun_per_year$data[[1]])
+
+rel_abun_per_season<-abun_per_season %>%
+  mutate(rel_abun_per_season = map(data, ~ (.x[-(1:5)])/sum(.x[-(1:5)], na.rm=TRUE)))
+
+rel_abun_per_season<-rel_abun_per_season %>%
+  unnest(rel_abun_per_season) 
+
+```
+
+#3 - Run a PCA on the trait values of species
+```{r}
+summary(traits.all)
+pairs(traits.all[2:18])
+pca<-prcomp(na.omit(traits.all[2:18]), scale=TRUE)
+
+pca1<-rda(na.omit(traits.all[2:18]), scale=TRUE)
+pca1scores<-scores(pca1)
+```
+
+#4 - Calculate functional diversity indices using package "FD"
+I will give weights to the fuzzy coded traits.
+Trophic group: 4 different levels -> omnivore, herbivore, carnivore, detritivore
+Feeding mode: 5 different levels -> cruise, active ambush, current, passive ambush, particle feeder
+Reproduction mode: 2 levels -> broadcasting, brooding
+
+```{r}
+test1<-dbFD()
+```
+
+Vieux code pas bon: 
+```{r}
+
+
+group_names<-abun_mat %>%
+  group_keys(seasonxyear_id) %>%
+  pull(1) #extract all different season x year id to name groups in the next step:
+
+abun_per_season<-abun_mat %>%
+  select(c(1:6, 13, 9:10)) %>%
+  group_by(seasonxyear_id) %>%
+  group_split(.) %>%
+  setNames(group_names) #data was collected a total of 73 times (73 different season x year entries, 73 datasets in the list)
+
+biom_per_season<-map(abun_per_season, ~ (pivot_wider(.x, id_cols = !abundance_per_season, names_from = Station, values_from = biomass_per_season))) #removes abundance_per_season column bc we don't need it
+
+abun_per_season<-map(abun_per_season, ~ (pivot_wider(.x, id_cols = !biomass_per_season, names_from = Station, values_from = abundance_per_season))) #removes abundance_per_season column bc we don't need it
+
+#Matrices per year
+#species x abundance per season matrix
+group_names_yr<-abun_mat %>%
+  group_keys(Year) %>%
+  pull(1)
+
+abun_per_year<-abun_mat %>%
+  select(c(1:7, 11:12)) %>%
+  unique(.) %>%
+  group_by(Year) %>%
+  group_split(.) %>%
+  setNames(group_names_yr)
+
+biom_per_year<-map(abun_per_year, ~ (pivot_wider(.x, id_cols = !abundance_per_year, names_from = Station, values_from = biomass_per_year))) #removes abundance_per_year column bc we don't need it
+abun_per_year<-map(abun_per_year, ~ (pivot_wider(.x, id_cols = !biomass_per_year, names_from = Station, values_from = abundance_per_year))) #removes biomass_per_year column bc we don't need it
+#Here we see that for some years only 1 station was sampled (ex: in 1996, only station GEO1 was sampled.)
+```
+
