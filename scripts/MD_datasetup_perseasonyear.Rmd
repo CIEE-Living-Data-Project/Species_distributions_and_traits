@@ -35,6 +35,67 @@ Data was collected in two regions: Central Strait of Georgia, Northern Strait of
 49 stations in Central Strait of Georgia
 56 stations in Northern Strait of Georgia
 
+#1.5 - A bit more data wrangling
+Notes: 
+1. The unit of samples is the sample or "Index" column and so there may be repeated sampling within the same region-station-year-season. This means that to get to the per season/year resolution, abundances and biomass need to be averaged. 
+abun_mat %>%
+  distinct(Index, Region, Station, Year, Season) %>%
+  group_by(Region, Station, Year, Season) %>% 
+  count() %>% 
+  filter(n>1)
+
+2. Because the different stations have different depths, a typical procedure to average across stations or compare stations is to convert the per volume (/m3) abundance and biomass to per area (/m2). This is done by multiplying abundance/m3 or biomass/m3 with the tow depth resulting in the total amount of a species collected in a plankton net.
+3. When doing the averaging, instances of zero abundance or biomass for a species should be considered.
+4. A common practice when averaging to per season is averaging per month first then season to get a more even representation of a season.
+
+5. 
+```{r}
+# sites x species
+abun_mat <- abun_mat %>% 
+  # sum abundance and biomass to species level across life stages or size classes
+  group_by(Index, Region, Station, Longitude, Latitude,
+           Year, Season, Month, scientificName) %>% 
+  # Also convert from abundance or biomass /m3 to /m2
+  summarise(Abundance = sum(`Abundance(indiv/m3)`*`Tow_start_depth(m)`),
+            Biomass = sum(`Biomass(mg/m3)`*`Tow_start_depth(m)`),
+            .groups = "drop") 
+
+# Convert to matrices to pad 0 abundance or biomass
+abun_mat.abun <- abun_mat %>% 
+  select(Index, scientificName, Abundance) %>% 
+  pivot_wider(names_from = scientificName, values_from = Abundance,
+              values_fill = 0) %>% 
+  pivot_longer(cols = -Index, 
+               names_to = "scientificName", values_to = "Abundance")
+abun_mat.biom <- abun_mat %>% 
+  select(Index, scientificName, Biomass) %>% 
+  pivot_wider(names_from = scientificName, values_from = Biomass,
+              values_fill = 0) %>% 
+  pivot_longer(cols = -Index, 
+               names_to = "scientificName", values_to = "Biomass")
+
+# merge the padded abundance and biomass data frames together
+abun_mat <- abun_mat %>% 
+  distinct(Index, Region, Station, Longitude, Latitude,
+           Year, Season, Month) %>% 
+  left_join(abun_mat.abun, by = "Index") %>% 
+  left_join(abun_mat.biom, by = c("Index","scientificName"))
+
+rm(abun_mat.abun, abun_mat.biom)
+
+
+# # Example of averaging per season after averaging by month
+# abun_per_season <- abun_mat %>% 
+#   group_by(scientificName, Region, Station, Year, Season, Month) %>% 
+#   summarise(Abundance = mean(Abundance),
+#          Biomass = mean(Biomass), .groups = "drop") %>% 
+#   group_by(scientificName, Region, Station, Year, Season) %>% 
+#   summarise(Abundance = mean(Abundance),
+#          Biomass = mean(Biomass), .groups = "drop") %>% 
+#   mutate(seasonxyear_id=paste(Season, Year, sep="_"))
+
+```
+
 #2 - Calculate abundance and biomass per year AND per season in each year
 ```{r}
 #create a row for mean abundance and biomass for each species (average the rows with different “Size_class_or_life_stage”)
@@ -68,9 +129,10 @@ abun_per_year<-abun_per_season %>%
 ```{r}
 #I need one different matrix for each season within a year and for each year - I'll create a list of matrices
 
-#TODO: Hello Patrick! So what I wanted was to create different matrices for every year and for every season within a year.
+#MD: Hello Patrick! So what I wanted was to create different matrices for every year and for every season within a year.
 #I think I finally fixed it, and Yes, I was possible to achieve this with some extra group_by prior to pivoting the matrices in wide format.
 #So this is what I did with the group_byS above, and below I am dividing the 2 big dataframes abun_per_season and abun_per_year in different matrices for each season and year.
+# TODO: PP: The script here seems to work as it is written. Why are the dataframes in nested lists rather than site x species matrices?
 
 ### MATRICES PER SEASON WITHIN A YEAR
 #List of matrices of ABUNDANCE
